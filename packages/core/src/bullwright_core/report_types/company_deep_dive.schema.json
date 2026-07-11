@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "bullwright:report_types/company_deep_dive/1.0",
+  "title": "company_deep_dive body v1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["summary", "thesis", "moat", "financial_highlights", "risks", "valuation", "verdict_rationale"],
+  "properties": {
+    "summary": {"type": "string", "minLength": 100, "maxLength": 2000, "description": "Markdown. Executive summary."},
+    "thesis": {"type": "string", "minLength": 200, "maxLength": 8000, "description": "Markdown. The investment thesis."},
+    "moat": {"type": "string", "minLength": 100, "maxLength": 6000, "description": "Markdown. Competitive position / product analysis."},
+    "financial_highlights": {"type": "string", "minLength": 100, "maxLength": 6000, "description": "Markdown. Key financials with figures."},
+    "risks": {
+      "type": "array", "minItems": 2, "maxItems": 10,
+      "items": {"type": "string", "minLength": 30, "maxLength": 1500},
+      "description": "Markdown items. What breaks the thesis."
+    },
+    "valuation": {"type": "string", "minLength": 100, "maxLength": 6000, "description": "Markdown. Valuation approach and result."},
+    "verdict_rationale": {"type": "string", "minLength": 50, "maxLength": 3000, "description": "Markdown. Why the envelope verdict follows from the above."}
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "bullwright:report_types/sector_overview/1.0",
+  "title": "sector_overview body v1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["overview", "themes", "outlook"],
+  "properties": {
+    "overview": {"type": "string", "minLength": 200, "maxLength": 8000, "description": "Markdown. State of the sector."},
+    "themes": {
+      "type": "array", "minItems": 1, "maxItems": 8,
+      "items": {"type": "string", "minLength": 30, "maxLength": 2000},
+      "description": "Markdown items. The forces that matter."
+    },
+    "tickers_mentioned": {
+      "type": "array", "maxItems": 30,
+      "items": {"type": "string", "minLength": 1, "maxLength": 12}
+    },
+    "outlook": {"type": "string", "minLength": 100, "maxLength": 4000, "description": "Markdown. Where this goes next."}
+  }
+}
