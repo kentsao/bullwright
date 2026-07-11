@@ -1,0 +1,162 @@
+# ============================================================
+# Bullwright .gitignore
+# Rule of thumb: if it's a secret, a credential, personal data,
+# or generated/local state — it does NOT go to GitHub.
+# CI runs gitleaks as a second line of defense, but this file
+# is the first line. When in doubt, ignore it.
+# ============================================================
+
+# --- Secrets & credentials (NEVER commit) -------------------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.der
+*_rsa
+*_ed25519
+id_rsa*
+id_ed25519*
+credentials*.json
+service-account*.json
+*serviceaccount*.json
+gcloud*.json
+aws_credentials*
+.aws/
+.netrc
+.npmrc
+.pypirc
+secrets/
+secrets.*
+*.secret
+*.secrets
+apikeys*
+api_keys*
+*.token
+token.*
+.stripe/
+stripe_*.key
+
+# --- Private / non-public docs & research -------------------
+# Anything you don't want on GitHub goes in these paths.
+docs/private/
+notes/private/
+private/
+*.private.md
+*.confidential.*
+
+# --- Local data, DBs, artifacts (generated, sometimes large,
+#     may contain fetched market data you can't redistribute) -
+data/*
+!data/.gitkeep
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+*.duckdb
+*.parquet
+*.feather
+*.h5
+*.hdf5
+
+# --- Agent workspaces (scratch research — fully local, never
+#     committed; may contain raw fetched content & personal notes)
+data/workspaces/
+
+# --- Model files (huge; live in Ollama, not git) -------------
+*.gguf
+*.safetensors
+*.mlx
+*.onnx
+*.pt
+*.pth
+*.bin
+
+# --- Logs & runtime state ------------------------------------
+*.log
+logs/
+*.pid
+agents/harness/state/
+agents/harness/turnlogs/
+
+# --- Python ---------------------------------------------------
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.python-version.local
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.hypothesis/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.tox/
+.uv-cache/
+
+# --- Node / Astro (apps/web) ----------------------------------
+node_modules/
+apps/web/dist/
+apps/web/.astro/
+.pnpm-store/
+npm-debug.log*
+pnpm-debug.log*
+
+# --- Terraform (state files contain secrets!) -----------------
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+.terraform/
+.terraform.lock.hcl
+terraform.rc
+
+# --- Docker local overrides -----------------------------------
+compose.override.yaml
+docker-compose.override.yml
+
+# --- IDE / OS --------------------------------------------------
+.DS_Store
+.AppleDouble
+._*
+.idea/
+.vscode/
+!.vscode/extensions.json
+*.swp
+*.swo
+.ipynb_checkpoints/
+
+# --- AI assistant local state (sessions may embed personal
+#     context; nothing here belongs in a public repo) -----------
+.claude/settings.local.json
+.claude/local/
+.claude/memory/
+.gemini/
+.aider*
+.cursor/
+CLAUDE.local.md
+
+# --- Misc local files -------------------------------------------
+*.bak
+*.orig
+*.rej
+*.tmp
+scratch/
+tmp/
+
+# --- Backtest & RAG artifacts (regenerable) --------------------
+rag/index/*.bin
+rag/index/*.faiss
+data/backtests/
+data/snapshots/

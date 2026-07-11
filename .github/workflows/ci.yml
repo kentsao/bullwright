@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  secrets-scan:
+    name: Secret scan (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  lint-and-test:
+    name: Lint, typecheck, unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+        with:
+          python-version: "3.12"
+      - name: Sync workspace
+        run: uv sync --all-packages --dev
+      - name: Ruff lint
+        run: uv run ruff check .
+      - name: Ruff format check
+        run: uv run ruff format --check .
+      - name: Mypy
+        run: uv run mypy .
+      - name: Unit tests
+        run: uv run pytest tests/unit -m "not integration"
+      - name: Dependency audit
+        run: uv run --with pip-audit pip-audit --skip-editable || true
+        # || true until phase 1 pins dependencies; then it becomes blocking
+
+  # Phase-1 additions (see docs/TEST_PLAN.md):
+  #   integration job (SQLite + Postgres matrix, docker compose)
+  #   openapi-drift job
+  #   astro-build job

@@ -1,0 +1,22 @@
+# CD — INTENTIONALLY DISABLED (docs/ARCHITECTURE.md §8).
+# Bullwright is local-first; nothing deploys to the internet yet.
+# To enable later: set the repository variable BW_DEPLOY_ENABLED=true,
+# add the required secrets, and fill in the stub steps.
+
+name: CD (stub, disabled)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    if: ${{ vars.BW_DEPLOY_ENABLED == 'true' }}   # off until you flip it
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build images (stub)
+        run: echo "TODO phase 4 — docker build api/worker, push to registry"
+      - name: Terraform plan (stub)
+        run: echo "TODO phase 4 — terraform -chdir=infra/cloud plan"
+      - name: Deploy blog (stub)
+        run: echo "TODO phase 4 — build Astro, push to static host"
