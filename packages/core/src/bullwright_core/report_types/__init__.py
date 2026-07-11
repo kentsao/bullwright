@@ -15,7 +15,7 @@ from typing import Any
 
 from jsonschema import Draft202012Validator
 
-from bullwright_core.html_guard import contains_raw_html
+from bullwright_core.html_guard import contains_control_chars, contains_raw_html
 
 
 class BodyValidationError(Exception):
@@ -44,6 +44,8 @@ def known_types() -> frozenset[str]:
 def _walk_strings(value: Any, path: str, errors: list[tuple[str, str]]) -> None:
     if isinstance(value, str) and contains_raw_html(value):
         errors.append((path, "raw HTML is not allowed in markdown fields"))
+    elif isinstance(value, str) and contains_control_chars(value):
+        errors.append((path, "control characters are not allowed"))
     elif isinstance(value, dict):
         for k, v in value.items():
             _walk_strings(v, f"{path}.{k}", errors)

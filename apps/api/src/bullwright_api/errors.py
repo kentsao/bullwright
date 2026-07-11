@@ -76,6 +76,17 @@ def install_handlers(app: FastAPI) -> None:
         ]
         return problem_response(request, validation_problem(errors))
 
+    from sqlalchemy.exc import DataError
+
+    @app.exception_handler(DataError)
+    async def _data_error(request: Request, exc: DataError) -> JSONResponse:
+        # Backend rejected a value (e.g. NUL in Postgres text) that slipped
+        # past field validation — a client-data problem, not a server bug.
+        return problem_response(
+            request,
+            Problem(422, "Request contains values the datastore rejects", kind="validation"),
+        )
+
     @app.exception_handler(Exception)
     async def _unhandled(request: Request, exc: Exception) -> JSONResponse:
         # Never leak internals (S8: probes must not 500 with stack traces —
