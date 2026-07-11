@@ -1,10 +1,12 @@
 [project]
 name = "bullwright-core"
-version = "0.0.1"
-description = "Bullwright domain models: report envelope, status machine, index protocol."
+version = "0.1.0"
+description = "Bullwright domain models: report envelope, status machine, report-type schemas."
 requires-python = ">=3.12"
 dependencies = [
     "pydantic>=2.7",
+    "python-ulid>=2.7",
+    "jsonschema>=4.22",
 ]
 
 [build-system]

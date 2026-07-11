@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "bullwright:report_types/earnings_review/1.0",
+  "title": "earnings_review body v1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["fiscal_period", "results_vs_expectations", "guidance", "takeaways"],
+  "properties": {
+    "fiscal_period": {"type": "string", "pattern": "^(FY)?20[0-9]{2}Q[1-4]$", "description": "e.g. 2026Q2 or FY2026Q2"},
+    "results_vs_expectations": {"type": "string", "minLength": 100, "maxLength": 6000, "description": "Markdown. Beat/miss on revenue, margins, EPS."},
+    "guidance": {"type": "string", "minLength": 50, "maxLength": 4000, "description": "Markdown. Management guidance and tone."},
+    "model_deltas": {"type": "string", "maxLength": 4000, "description": "Markdown, optional. What changes in the model."},
+    "takeaways": {
+      "type": "array", "minItems": 1, "maxItems": 8,
+      "items": {"type": "string", "minLength": 20, "maxLength": 1000},
+      "description": "Markdown items. So-what conclusions."
+    }
+  }
+}

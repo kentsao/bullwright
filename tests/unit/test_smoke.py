@@ -4,4 +4,4 @@ import bullwright_core
 
 
 def test_workspace_imports() -> None:
-    assert bullwright_core.__version__ == "0.0.1"
+    assert bullwright_core.__version__

@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "bullwright:report_types/thesis_update/1.0",
+  "title": "thesis_update body v1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["what_changed", "prior_view", "new_view"],
+  "properties": {
+    "what_changed": {"type": "string", "minLength": 50, "maxLength": 4000, "description": "Markdown. The new information or realization."},
+    "prior_view": {"type": "string", "minLength": 30, "maxLength": 3000, "description": "Markdown. The superseded view, honestly stated."},
+    "new_view": {"type": "string", "minLength": 50, "maxLength": 6000, "description": "Markdown. The updated thesis."}
+  }
+}

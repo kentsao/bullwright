@@ -20,7 +20,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  lint-and-test:
+  lint-and-unit:
     name: Lint, typecheck, unit tests
     runs-on: ubuntu-latest
     steps:
@@ -28,21 +28,70 @@ jobs:
       - uses: astral-sh/setup-uv@v4
         with:
           python-version: "3.12"
-      - name: Sync workspace
-        run: uv sync --all-packages --dev
-      - name: Ruff lint
-        run: uv run ruff check .
-      - name: Ruff format check
-        run: uv run ruff format --check .
-      - name: Mypy
-        run: uv run mypy .
-      - name: Unit tests
-        run: uv run pytest tests/unit -m "not integration"
+      - run: uv sync --all-packages --dev
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run mypy .
+      - run: uv run pytest tests/unit -q
       - name: Dependency audit
         run: uv run --with pip-audit pip-audit --skip-editable || true
-        # || true until phase 1 pins dependencies; then it becomes blocking
+        # || true until phase 1 pins are reviewed; then becomes blocking
 
-  # Phase-1 additions (see docs/TEST_PLAN.md):
-  #   integration job (SQLite + Postgres matrix, docker compose)
-  #   openapi-drift job
-  #   astro-build job
+  integration:
+    name: Contract + security tests (${{ matrix.db }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        db: [sqlite, postgres]
+    services:
+      postgres:
+        image: ${{ matrix.db == 'postgres' && 'postgres:16' || '' }}
+        env:
+          POSTGRES_USER: bullwright
+          POSTGRES_PASSWORD: bullwright
+          POSTGRES_DB: bullwright_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U bullwright"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+        with:
+          python-version: "3.12"
+      - run: uv sync --all-packages --dev
+      - name: Run integration + security suites
+        env:
+          BW_TEST_DB_URL: ${{ matrix.db == 'postgres' && 'postgresql+psycopg://bullwright:bullwright@localhost:5432/bullwright_test' || '' }}
+        run: uv run pytest tests/integration tests/security -q
+
+  openapi-drift:
+    name: OpenAPI drift check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+        with:
+          python-version: "3.12"
+      - run: uv sync --all-packages --dev
+      - name: Regenerate and diff
+        run: |
+          uv run bw openapi-export --out /tmp/openapi.json
+          diff -u docs/openapi.json /tmp/openapi.json \
+            || (echo "::error::docs/openapi.json is stale — run 'bw openapi-export'" && exit 1)
+
+  blog-build:
+    name: Astro build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+      - run: npm ci
+        working-directory: apps/web
+      - run: npx astro build
+        working-directory: apps/web

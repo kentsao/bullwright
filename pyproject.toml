@@ -5,9 +5,15 @@ description = "Bullwright — stock research, forged by agents. Workspace root."
 requires-python = ">=3.12"
 license = { text = "MIT" }
 
+[tool.uv]
+# copy, not clonefile: on macOS, CoW clones from uv's cache carry the
+# UF_HIDDEN file flag, and Python's site module silently skips hidden
+# .pth files — which breaks every editable install in the workspace.
+link-mode = "copy"
+
 [tool.uv.workspace]
 # List members explicitly; add each package/app here as it lands.
-members = ["packages/core"]
+members = ["packages/core", "packages/db", "apps/api"]
 
 [dependency-groups]
 dev = [
@@ -16,6 +22,9 @@ dev = [
     "ruff>=0.5",
     "mypy>=1.10",
     "pre-commit",
+    "types-jsonschema>=4.26.0.20260518",
+    "httpx2>=2.5.0",
+    "psycopg[binary]>=3.1",
 ]
 
 [tool.ruff]
@@ -35,6 +44,8 @@ select = [
 ]
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S101"]   # asserts are fine in tests
+# Alembic-generated code; reviewed, not hand-formatted
+"packages/db/migrations/versions/*" = ["E501", "W291"]
 
 [tool.mypy]
 python_version = "3.12"

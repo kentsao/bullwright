@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "bullwright:report_types/news_flash/1.0",
+  "title": "news_flash body v1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["event", "impact", "urgency"],
+  "properties": {
+    "event": {"type": "string", "minLength": 30, "maxLength": 2000, "description": "Markdown. What happened, with date."},
+    "impact": {"type": "string", "minLength": 30, "maxLength": 3000, "description": "Markdown. Why it matters for the thesis."},
+    "urgency": {"enum": ["low", "medium", "high"], "description": "high = operator should look today"}
+  }
+}
