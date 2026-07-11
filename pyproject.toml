@@ -13,7 +13,7 @@ link-mode = "copy"
 
 [tool.uv.workspace]
 # List members explicitly; add each package/app here as it lands.
-members = ["packages/core"]
+members = ["packages/core", "packages/db"]
 
 [dependency-groups]
 dev = [
@@ -42,6 +42,8 @@ select = [
 ]
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S101"]   # asserts are fine in tests
+# Alembic-generated code; reviewed, not hand-formatted
+"packages/db/migrations/versions/*" = ["E501", "W291"]
 
 [tool.mypy]
 python_version = "3.12"

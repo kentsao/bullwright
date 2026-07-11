@@ -35,7 +35,7 @@ and the lockfile in one tool. No conda/pyenv needed.
 
 ```bash
 brew install uv                 # or: curl -LsSf https://astral.sh/uv/install.sh | sh
-uv sync --all-packages --dev    # creates .venv/, installs everything from uv.lock
+./scripts/sync.sh              # uv sync + a macOS .pth-flag workaround (see script)
 uv run pytest tests/unit        # run the tests
 uv run pre-commit install       # enable secret-scanning commit hooks (do this!)
 cp .env.example .env            # local config (never committed)
