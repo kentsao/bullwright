@@ -16,7 +16,15 @@ def db_url() -> str:
 
 def make_engine(url: str | None = None) -> Engine:
     url = url or db_url()
-    engine = create_engine(url, future=True)
+    kwargs: dict[str, object] = {"future": True}
+    if url in ("sqlite://", "sqlite:///:memory:"):
+        # In-memory SQLite is per-connection; tests need one shared DB
+        # across threads (TestClient runs the app in a worker thread).
+        from sqlalchemy.pool import StaticPool
+
+        kwargs["poolclass"] = StaticPool
+        kwargs["connect_args"] = {"check_same_thread": False}
+    engine = create_engine(url, **kwargs)
     if url.startswith("sqlite"):
         # WAL + enforced FKs make dev-SQLite behave like a grown-up DB.
         @event.listens_for(engine, "connect")
