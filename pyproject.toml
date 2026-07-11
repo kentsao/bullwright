@@ -24,6 +24,7 @@ dev = [
     "pre-commit",
     "types-jsonschema>=4.26.0.20260518",
     "httpx2>=2.5.0",
+    "psycopg[binary]>=3.1",
 ]
 
 [tool.ruff]

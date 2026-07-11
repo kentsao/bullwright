@@ -20,7 +20,7 @@ from fastapi.testclient import TestClient
 
 @pytest.fixture()
 def engine():  # type: ignore[no-untyped-def]
-    url = os.environ.get("BW_TEST_DB_URL", "sqlite://")
+    url = os.environ.get("BW_TEST_DB_URL") or "sqlite://"
     engine = make_engine(url)
     Base.metadata.create_all(engine)
     yield engine
