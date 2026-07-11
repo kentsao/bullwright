@@ -1,0 +1,16 @@
+{
+  "name": "bullwright-web",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Bullwright blog — static Astro site rendering published research reports.",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "astro": "^5.2.0",
+    "rehype-sanitize": "^6.0.0"
+  }
+}

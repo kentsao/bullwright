@@ -1,0 +1,98 @@
+---
+interface Props {
+  title: string;
+  description?: string;
+}
+const { title, description = "Stock research, forged by agents." } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <title>{title} · Bullwright</title>
+    <style is:global>
+      :root {
+        --bg: #ffffff;
+        --fg: #1a1d23;
+        --muted: #6b7280;
+        --accent: #b45309;
+        --card: #f6f7f9;
+        --border: #e5e7eb;
+        --buy: #047857;
+        --sell: #b91c1c;
+        --hold: #6b7280;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #101216;
+          --fg: #e7e9ee;
+          --muted: #9aa1ad;
+          --accent: #f59e0b;
+          --card: #191c22;
+          --border: #2a2e37;
+          --buy: #34d399;
+          --sell: #f87171;
+          --hold: #9aa1ad;
+        }
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--fg);
+        font: 16px/1.65 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      }
+      main { max-width: 46rem; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+      a { color: var(--accent); text-decoration: none; }
+      a:hover { text-decoration: underline; }
+      header.site {
+        border-bottom: 1px solid var(--border);
+        padding: 1rem 1.25rem;
+        display: flex; align-items: baseline; gap: 0.75rem;
+      }
+      header.site .logo { font-weight: 800; font-size: 1.15rem; color: var(--fg); }
+      header.site .tag { color: var(--muted); font-size: 0.85rem; }
+      footer.site {
+        border-top: 1px solid var(--border);
+        color: var(--muted);
+        font-size: 0.8rem;
+        padding: 1.25rem;
+        text-align: center;
+      }
+      h1, h2, h3 { line-height: 1.25; }
+      code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 1rem 1.25rem;
+        margin: 0.9rem 0;
+      }
+      .meta { color: var(--muted); font-size: 0.85rem; }
+      .pill {
+        display: inline-block;
+        border-radius: 999px;
+        padding: 0.1rem 0.6rem;
+        font-size: 0.75rem;
+        font-weight: 700;
+        border: 1px solid var(--border);
+      }
+      .pill.buy, .pill.strong_buy { color: var(--buy); border-color: var(--buy); }
+      .pill.sell, .pill.strong_sell { color: var(--sell); border-color: var(--sell); }
+      .pill.hold { color: var(--hold); border-color: var(--hold); }
+    </style>
+  </head>
+  <body>
+    <header class="site">
+      <a class="logo" href="/">🐂 Bullwright</a>
+      <span class="tag">stock research, forged by agents</span>
+    </header>
+    <main><slot /></main>
+    <footer class="site">
+      Bullwright is a research toy. Nothing here is investment advice.
+    </footer>
+  </body>
+</html>

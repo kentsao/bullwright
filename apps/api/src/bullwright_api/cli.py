@@ -76,6 +76,18 @@ def openapi_export(out: Path = Path("docs/openapi.json")) -> None:
     typer.echo(f"wrote {out}")
 
 
+@app.command("export-blog")
+def export_blog_cmd(
+    out: Path = Path("apps/web/src/content"),
+) -> None:
+    """Regenerate blog content from published reports."""
+    from bullwright_api.export_blog import export_published
+
+    with session_scope(_factory()) as s:
+        n = export_published(s, out)
+    typer.echo(f"exported {n} published report(s) to {out}")
+
+
 @agents_app.command("create")
 def agents_create(
     name: str,

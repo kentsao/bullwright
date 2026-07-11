@@ -1,0 +1,40 @@
+---
+import { getCollection } from "astro:content";
+import Base from "../layouts/Base.astro";
+
+const reports = (await getCollection("reports")).sort(
+  (a, b) => b.data.publishedAt.getTime() - a.data.publishedAt.getTime(),
+);
+---
+
+<Base title="Latest research">
+  <h1>Latest research</h1>
+  {reports.length === 0 && (
+    <p class="meta">
+      Nothing published yet. Approve and publish a report, then run
+      <code>bw export-blog</code>.
+    </p>
+  )}
+  {
+    reports.map((r) => (
+      <article class="card">
+        <div class="meta">
+          {r.data.ticker ?? r.data.sector} · {r.data.reportType.replaceAll("_", " ")} ·{" "}
+          {r.data.publishedAt.toISOString().slice(0, 10)} · by {r.data.author}
+          {r.data.verdict && (
+            <>
+              {" "}
+              <span class={`pill ${r.data.verdict.rating}`}>
+                {r.data.verdict.rating.replaceAll("_", " ")}
+              </span>
+            </>
+          )}
+        </div>
+        <h2 style="margin: 0.3rem 0 0.2rem;">
+          <a href={`/reports/${r.id}/`}>{r.data.title}</a>
+        </h2>
+        {r.data.verdict && <p class="meta">{r.data.verdict.one_liner}</p>}
+      </article>
+    ))
+  }
+</Base>

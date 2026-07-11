@@ -1,0 +1,48 @@
+---
+import { getCollection, render } from "astro:content";
+import Base from "../../layouts/Base.astro";
+
+export async function getStaticPaths() {
+  const reports = await getCollection("reports");
+  return reports.map((r) => ({ params: { slug: r.id }, props: { report: r } }));
+}
+
+const { report } = Astro.props;
+const { Content } = await render(report);
+const v = report.data.verdict;
+---
+
+<Base title={report.data.title}>
+  <p class="meta">
+    <a href="/">← all research</a>
+  </p>
+  <h1>{report.data.title}</h1>
+  <p class="meta">
+    {report.data.ticker ?? report.data.sector} ·{" "}
+    {report.data.reportType.replaceAll("_", " ")} ·{" "}
+    {report.data.publishedAt.toISOString().slice(0, 10)} · by {report.data.author}
+    {report.data.authorModel ? ` (${report.data.authorModel})` : ""} ·{" "}
+    {report.data.provenanceCount} source{report.data.provenanceCount === 1 ? "" : "s"}
+  </p>
+
+  {
+    v && (
+      <div class="card">
+        <span class={`pill ${v.rating}`}>{v.rating.replaceAll("_", " ")}</span>
+        <strong style="margin-left: 0.5rem;">{v.one_liner}</strong>
+        <div class="meta" style="margin-top: 0.4rem;">
+          confidence {(v.confidence * 100).toFixed(0)}% · horizon {v.horizon_days}d
+          {v.price_target ? ` · target ${v.price_target}` : ""}
+        </div>
+      </div>
+    )
+  }
+
+  <Content />
+
+  {
+    report.data.tags.length > 0 && (
+      <p class="meta">tags: {report.data.tags.join(", ")}</p>
+    )
+  }
+</Base>
