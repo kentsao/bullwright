@@ -32,6 +32,14 @@ def create_app(engine: Engine | None = None) -> FastAPI:
     @app.middleware("http")
     async def request_id_and_size_cap(request: Request, call_next):  # type: ignore[no-untyped-def]
         request.state.request_id = new_id("req")
+        # NUL bytes are legal in URLs but not in Postgres text — reject at
+        # the boundary so probes get a 4xx on every backend (rule S8).
+        from urllib.parse import unquote
+
+        if "\x00" in unquote(request.url.path) or "\x00" in unquote(request.url.query or ""):
+            return problem_response(
+                request, Problem(400, "NUL byte in request URL", kind="bad-request")
+            )
         length = request.headers.get("content-length")
         if length and int(length) > cfg.max_request_bytes:
             return problem_response(
