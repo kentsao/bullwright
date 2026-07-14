@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import Engine
 
 from bullwright_api.errors import Problem, install_handlers, problem_response
-from bullwright_api.routes import meta, reports, runs, tickers
+from bullwright_api.routes import meta, ops, reports, runs, tickers
 from bullwright_api.settings import settings
 
 
@@ -55,6 +55,11 @@ def create_app(engine: Engine | None = None) -> FastAPI:
     app.include_router(reports.router, prefix=v1_prefix)
     app.include_router(tickers.router, prefix=v1_prefix)
     app.include_router(runs.router, prefix=v1_prefix)
+    if cfg.env == "dev":
+        # Operator troubleshooting dashboard — never mounted outside dev
+        # (docs/ARCHITECTURE.md §5b). Unauthenticated by design: dev binds
+        # to localhost and the surface is read-only.
+        app.include_router(ops.router)
 
     @app.get("/", include_in_schema=False)
     def root() -> JSONResponse:
