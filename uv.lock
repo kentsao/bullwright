@@ -11,6 +11,7 @@ resolution-markers = [
 members = [
     "bullwright",
     "bullwright-api",
+    "bullwright-client",
     "bullwright-core",
     "bullwright-db",
     "bullwright-rag",
@@ -211,6 +212,23 @@ requires-dist = [
     { name = "pydantic-settings", specifier = ">=2.3" },
     { name = "typer", specifier = ">=0.12" },
     { name = "uvicorn", specifier = ">=0.30" },
+]
+
+[[package]]
+name = "bullwright-client"
+version = "0.1.0"
+source = { editable = "packages/clients" }
+dependencies = [
+    { name = "bullwright-core" },
+    { name = "httpx2" },
+    { name = "typer" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "bullwright-core", editable = "packages/core" },
+    { name = "httpx2", specifier = ">=0.1" },
+    { name = "typer", specifier = ">=0.12" },
 ]
 
 [[package]]
