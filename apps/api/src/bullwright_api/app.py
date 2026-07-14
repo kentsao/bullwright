@@ -8,11 +8,11 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import Engine
 
 from bullwright_api.errors import Problem, install_handlers, problem_response
-from bullwright_api.routes import meta, ops, reports, runs, tickers
+from bullwright_api.routes import meta, ops, reports, runs, search, tickers
 from bullwright_api.settings import settings
 
 
-def create_app(engine: Engine | None = None) -> FastAPI:
+def create_app(engine: Engine | None = None, embedder: object | None = None) -> FastAPI:
     cfg = settings()
     app = FastAPI(
         title="Bullwright API",
@@ -28,6 +28,12 @@ def create_app(engine: Engine | None = None) -> FastAPI:
     engine = engine or make_engine(cfg.db_url)
     app.state.engine = engine
     app.state.session_factory = make_session_factory(engine)
+
+    if embedder is None:
+        from bullwright_rag import OllamaEmbedder
+
+        embedder = OllamaEmbedder()
+    app.state.embedder = embedder
 
     @app.middleware("http")
     async def request_id_and_size_cap(request: Request, call_next):  # type: ignore[no-untyped-def]
@@ -55,6 +61,7 @@ def create_app(engine: Engine | None = None) -> FastAPI:
     app.include_router(reports.router, prefix=v1_prefix)
     app.include_router(tickers.router, prefix=v1_prefix)
     app.include_router(runs.router, prefix=v1_prefix)
+    app.include_router(search.router, prefix=v1_prefix)
     if cfg.env == "dev":
         # Operator troubleshooting dashboard — never mounted outside dev
         # (docs/ARCHITECTURE.md §5b). Unauthenticated by design: dev binds

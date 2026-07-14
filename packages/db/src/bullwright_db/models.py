@@ -215,6 +215,29 @@ class IdempotencyKey(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 
+class ReportChunk(Base):
+    """RAG chunks (docs/ARCHITECTURE.md §6). Embeddings are stored as JSON
+    float lists — portable across SQLite/Postgres, brute-force cosine in
+    the app meets the <2s @ 10k-chunks target. pgvector/sqlite-vec are
+    drop-in VectorStore adapters later; the schema stays the same."""
+
+    __tablename__ = "report_chunks"
+
+    chunk_id: Mapped[str] = mapped_column(String(30), primary_key=True)
+    report_id: Mapped[str] = mapped_column(
+        ForeignKey("reports.report_id", ondelete="CASCADE"), index=True
+    )
+    ticker_symbol: Mapped[str | None] = mapped_column(String(12), index=True)
+    section: Mapped[str | None] = mapped_column(String(80))
+    seq: Mapped[int] = mapped_column(Integer)
+    text: Mapped[str] = mapped_column(Text)
+    embedding: Mapped[list[Any]] = mapped_column()  # JSON list[float]
+    embed_model: Mapped[str] = mapped_column(String(60), default="nomic-embed-text")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+    __table_args__ = (UniqueConstraint("report_id", "seq"),)
+
+
 # --- Billing (dormant until BW_BILLING_ENABLED; docs/SUBSCRIPTION.md) ---
 
 

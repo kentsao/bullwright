@@ -232,6 +232,10 @@ def transition(
         raise validation_problem([{"loc": "reason", "msg": "a rejection reason is required"}])
 
     report.status = target.value
+    if action is ReportAction.SUBMIT:
+        session.add(  # make it searchable as soon as it's reviewable
+            Job(job_id=new_id("job"), kind="embed_report", payload={"report_id": report.report_id})
+        )
     if action in (ReportAction.APPROVE, ReportAction.REJECT):
         report.reviewed_by = principal.agent_name
         report.review_note = reason
