@@ -1,0 +1,41 @@
+# Bullwright harness loops (docs/AGENT_SKILLS.md §4).
+# Cadence is enforced by whatever scheduler invokes `bw-harness run`
+# (cron/launchd) — the harness itself guarantees idempotency per
+# (loop, date, input digest), so double-firing a day is safe.
+
+loops:
+  news_sweep:
+    cadence: daily
+    min_agent_class: local
+    max_turns: 10
+    max_seconds: 600
+    thinking: true
+    # Input: headlines JSON placed in data/inbox/news/<date>.json by the
+    # operator or a future news-provider adapter (phase 3).
+    instructions: |
+      You are given a list of news headlines about watchlist tickers,
+      inside a data fence. Pick the single most thesis-relevant item and
+      produce ONE news_flash report for it:
+      1. Call search_reports to check existing coverage for that ticker.
+      2. Build the news_flash envelope: ticker, title, verdict (be
+         conservative: confidence <= 0.6 for headline-only information),
+         body {event, impact, urgency}, provenance (use kind "url" with
+         the headline's source reference from the input), tags.
+      3. Call validate_report; fix every error it reports.
+      4. Call create_report, then submit_report with the returned id.
+      Then reply with a one-paragraph summary. If no headline is
+      thesis-relevant, reply explaining why and create nothing.
+
+  report_tagger:
+    cadence: on_submit
+    min_agent_class: local
+    max_turns: 6
+    max_seconds: 240
+    thinking: false
+    instructions: |
+      You are given one report's title and body inside a data fence.
+      Propose up to 5 lowercase tags (alphanumeric, dash, underscore)
+      capturing sector, theme, and event type. Call search_reports once
+      to see tags used by related coverage and stay consistent with
+      them. Reply with ONLY a JSON array of tag strings as your final
+      answer — no prose.

@@ -4,8 +4,27 @@
     {
       "name": "blog-preview",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["--prefix", "apps/web", "astro", "preview", "--root", "apps/web", "--port", "4321"],
+      "runtimeArgs": [
+        "--prefix",
+        "apps/web",
+        "astro",
+        "preview",
+        "--root",
+        "apps/web",
+        "--port",
+        "4321"
+      ],
       "port": 4321
+    },
+    {
+      "name": "api-dev",
+      "runtimeExecutable": "uv",
+      "runtimeArgs": [
+        "run",
+        "bw",
+        "serve"
+      ],
+      "port": 8600
     }
   ]
 }

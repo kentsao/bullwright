@@ -46,12 +46,17 @@ prefer a classic activated shell: `source .venv/bin/activate`.
 
 ## Status
 
-- [x] Spec + test plan drafted
-- [ ] Reviewed by you
-- [ ] Implementation phase 1 (core API + DB + blog)
-- [ ] Implementation phase 2 (agent skills + RAG)
-- [ ] Implementation phase 3 (indexes + backtest)
-- [ ] Implementation phase 4 (subscriptions + cloud deploy)
+- [x] Spec + test plan (reviewed; decisions in [ADR-0001](docs/adr/0001-initial-stack.md))
+- [x] Phase 1 — core API + DB + blog (`v0.1.0`)
+- [x] Phase 2 — agent skills, bw-agent CLI, RAG search, gemma harness, ops dashboard
+- [ ] Phase 3 — quant indexes + backtest
+- [ ] Phase 4 — UI polish + cloud packaging (billing stays spec-only)
 
 Not deployed to the internet — this is a local-first framework/template.
 GitHub is used for version control only (see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#github--cicd)).
+
+### Troubleshooting
+
+Run the API (`uv run bw serve`) and open **http://127.0.0.1:8600/ops** —
+overview counts, the review queue, job errors, agent runs, and the audit
+tail, straight from the live DB (dev-mode only, read-only).

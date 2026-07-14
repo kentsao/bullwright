@@ -28,10 +28,16 @@ stepping on each other.
 ### Phase 2 — Agents & RAG (3–4 days)
 1. `packages/clients` + `bw-agent` CLI.
 2. Skills: `bw-report-writer`, `bw-rag-search` first; rest after.
-3. `rag/`: chunker, Ollama embed, sqlite-vec store, `/search`.
-4. `agents/harness`: runner with H1–H6, `news_sweep` + `report_tagger`
+3. `rag/`: chunker, Ollama embed, vector store behind a `VectorStore`
+   protocol (v1: portable JSON-embedding store + numpy cosine — meets the
+   <2s @10k-chunks target with zero native-extension risk; sqlite-vec/
+   pgvector adapters are drop-ins later), `/search`.
+4. `apps/worker`: jobs-table runner; `embed_report` + `blog_export`.
+5. **Ops dashboard `/ops`** (operator request 2026-07-11): overview,
+   review queue, jobs, runs, audit tail; dev-env only (ARCHITECTURE §5b).
+6. `agents/harness`: runner with H1–H8, `news_sweep` + `report_tagger`
    loops.
-5. Tests: skill lint, harness fakes, RAG eval baseline, A1–A5.
+7. Tests: skill lint, harness fakes, RAG eval baseline, A1–A5.
 - Exit: Claude uploads a real deep-dive end-to-end; gemma live smoke passes.
 
 ### Phase 3 — Quant (3–4 days)

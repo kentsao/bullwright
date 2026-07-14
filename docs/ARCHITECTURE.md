@@ -121,6 +121,19 @@ optionally swapped to a real queue later. Jobs:
 - Zero client-side data fetching in MVP. Future subscription gating happens
   at the hosting layer (see SUBSCRIPTION.md), not in the static site.
 
+## 5b. Ops dashboard (`/ops`, added 2026-07-11 at operator request)
+
+Troubleshooting surface served by apps/api itself — live DB, no extra
+process, no build step. Pages: overview (report/job/run counts, recent
+failures), review queue (submitted reports awaiting operator action),
+jobs table with errors, agent-run history, audit-log tail. Server-rendered
+HTML, no client framework.
+
+Security posture: mounted **only when `BW_ENV=dev`** (the default). It
+never ships in a prod config; the blog remains the only public surface.
+Rationale: for a framework, the first debugging question is "what state
+is the system in" — the dashboard answers it without psql.
+
 ## 6. RAG subsystem
 
 - **Ingest:** report bodies, provenance sources, (later) filings. Chunker

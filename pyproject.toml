@@ -13,7 +13,7 @@ link-mode = "copy"
 
 [tool.uv.workspace]
 # List members explicitly; add each package/app here as it lands.
-members = ["packages/core", "packages/db", "apps/api"]
+members = ["packages/core", "packages/db", "packages/clients", "apps/api", "rag", "apps/worker", "agents/harness"]
 
 [dependency-groups]
 dev = [
@@ -25,6 +25,7 @@ dev = [
     "types-jsonschema>=4.26.0.20260518",
     "httpx2>=2.5.0",
     "psycopg[binary]>=3.1",
+    "types-pyyaml>=6.0.12.20260518",
 ]
 
 [tool.ruff]
@@ -42,6 +43,10 @@ select = [
     "N",                # naming
     "RUF",
 ]
+[tool.ruff.lint.flake8-bugbear]
+# typer's declarative-default idiom is safe; silence B008 for it
+extend-immutable-calls = ["typer.Option", "typer.Argument"]
+
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S101"]   # asserts are fine in tests
 # Alembic-generated code; reviewed, not hand-formatted
