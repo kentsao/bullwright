@@ -123,7 +123,7 @@ def compute_scorecard(session: Session, agent_name: str, as_of: date) -> Scoreca
         if ticker is None:
             continue
         bars: dict[date, float] = {
-            row.bar_date: float(row.adj_close)  # type: ignore[misc]
+            row.bar_date: float(row.adj_close)
             for row in session.scalars(
                 select(PriceBar).where(PriceBar.ticker_id == ticker.ticker_id)
             ).all()
