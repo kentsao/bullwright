@@ -1,0 +1,59 @@
+---
+import Base from "../../layouts/Base.astro";
+import { tickers } from "../../lib/siteData";
+
+const rows = tickers().sort((a, b) => (a.latest_rank ?? 99) - (b.latest_rank ?? 99));
+---
+
+<Base title="Watchlist">
+  <h1>Watchlist</h1>
+  {rows.length === 0 && <p class="meta">No score data yet — run <code>bw quant ingest</code>, <code>bw quant score</code>, then <code>bw export-blog</code>.</p>}
+  {
+    rows.length > 0 && (
+      <table>
+        <thead>
+          <tr>
+            <th>rank</th>
+            <th>ticker</th>
+            <th>sector</th>
+            <th>score</th>
+            <th>momentum</th>
+            <th>value</th>
+            <th>quality</th>
+            <th>volatility</th>
+            <th>sentiment</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((t) => (
+            <tr>
+              <td>{t.latest_rank ?? "—"}</td>
+              <td>
+                <a href={`/tickers/${t.symbol}/`}>
+                  <strong>{t.symbol}</strong>
+                </a>
+              </td>
+              <td class="meta">{t.sector ?? ""}</td>
+              <td>
+                <strong>{t.latest_score?.toFixed(1) ?? "—"}</strong>
+              </td>
+              {["momentum", "value", "quality", "volatility", "sentiment"].map((k) => (
+                <td>{t.latest_indexes[k]?.toFixed(0) ?? "—"}</td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    )
+  }
+  <p class="meta">
+    Composite = weighted blend of the five indexes (see <a href="/indexes/">methodology</a>).
+    “—” means insufficient data, never a fake neutral.
+  </p>
+</Base>
+
+<style>
+  table { border-collapse: collapse; width: 100%; }
+  th, td { text-align: left; padding: 0.45rem 0.6rem; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 600; font-size: 0.85rem; }
+</style>

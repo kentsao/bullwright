@@ -1,0 +1,100 @@
+---
+/**
+ * Build-time SVG line chart — no client JS, themes via CSS variables.
+ * Points: [label, value][]; nulls are skipped.
+ */
+interface Props {
+  points: [string, number | null][];
+  label?: string;
+  height?: number;
+  yMin?: number | null;
+  yMax?: number | null;
+  formatValue?: (v: number) => string;
+}
+const {
+  points,
+  label = "",
+  height = 160,
+  yMin = null,
+  yMax = null,
+  formatValue = (v: number) => v.toFixed(1),
+} = Astro.props;
+
+const width = 640;
+const pad = { top: 12, right: 54, bottom: 22, left: 8 };
+const usable = points.filter((p): p is [string, number] => p[1] !== null);
+const values = usable.map((p) => p[1]);
+const lo = yMin ?? Math.min(...values);
+const hi = yMax ?? Math.max(...values);
+const span = hi - lo || 1;
+const iw = width - pad.left - pad.right;
+const ih = height - pad.top - pad.bottom;
+
+const xy = (i: number, v: number): [number, number] => [
+  pad.left + (usable.length <= 1 ? iw / 2 : (i / (usable.length - 1)) * iw),
+  pad.top + ih - ((v - lo) / span) * ih,
+];
+const path = usable
+  .map((p, i) => {
+    const [x, y] = xy(i, p[1]);
+    return `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`;
+  })
+  .join(" ");
+const area =
+  usable.length > 1
+    ? `${path} L${(pad.left + iw).toFixed(1)},${(pad.top + ih).toFixed(1)} L${pad.left},${(pad.top + ih).toFixed(1)} Z`
+    : "";
+const last = usable.at(-1);
+const first = usable[0];
+const lastXY = last ? xy(usable.length - 1, last[1]) : null;
+const up = last && first ? last[1] >= first[1] : true;
+---
+
+{
+  usable.length > 1 ? (
+    <figure class="chart">
+      {label && <figcaption class="meta">{label}</figcaption>}
+      <svg
+        viewBox={`0 0 ${width} ${height}`}
+        role="img"
+        aria-label={`${label} chart, latest ${formatValue(last![1])}`}
+      >
+        <path d={area} class={up ? "area up" : "area down"} />
+        <path d={path} class={up ? "line up" : "line down"} fill="none" />
+        {lastXY && <circle cx={lastXY[0]} cy={lastXY[1]} r="3" class={up ? "dot up" : "dot down"} />}
+        {lastXY && (
+          <text x={lastXY[0] + 6} y={lastXY[1] + 4} class="lastval">
+            {formatValue(last![1])}
+          </text>
+        )}
+        <text x={pad.left} y={height - 6} class="axis">
+          {first?.[0]}
+        </text>
+        <text x={width - pad.right} y={height - 6} class="axis" text-anchor="end">
+          {last?.[0]}
+        </text>
+      </svg>
+    </figure>
+  ) : (
+    <p class="meta">not enough data to chart {label}</p>
+  )
+}
+
+<style>
+  .chart {
+    margin: 0.75rem 0;
+  }
+  svg {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  .line.up { stroke: var(--buy); stroke-width: 2; }
+  .line.down { stroke: var(--sell); stroke-width: 2; }
+  .area.up { fill: color-mix(in srgb, var(--buy) 12%, transparent); }
+  .area.down { fill: color-mix(in srgb, var(--sell) 12%, transparent); }
+  .dot.up { fill: var(--buy); }
+  .dot.down { fill: var(--sell); }
+  .lastval { font-size: 12px; font-weight: 700; fill: var(--fg); }
+  .axis { font-size: 10px; fill: var(--muted); }
+</style>

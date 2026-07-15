@@ -1,0 +1,76 @@
+---
+import Base from "../layouts/Base.astro";
+import { scorecards } from "../lib/siteData";
+
+const cards = scorecards().sort((a, b) => (b.evaluated ?? 0) - (a.evaluated ?? 0));
+---
+
+<Base title="Agent scorecard">
+  <h1>Agent scorecard</h1>
+  <p>
+    Every published verdict is graded against what the price actually did at 30 days,
+    90 days, and the verdict's own horizon. Bullish calls need a positive move, bearish
+    a negative one, holds must stay within ±5%. Calibration compares an agent's stated
+    confidence with its realized accuracy — an agent that says 90% and hits 50% has a
+    calibration problem, not bad luck.
+  </p>
+  {cards.length === 0 && <p class="meta">no scorecards yet — publish some reports and let time pass</p>}
+  {
+    cards.map((c) => (
+      <article class="card">
+        <h2 style="margin:0 0 0.4rem;">{c.agent}</h2>
+        {c.evaluated === 0 ? (
+          <p class="meta" style="margin:0;">no elapsed checkpoints yet — verdicts are on the clock</p>
+        ) : (
+          <>
+            <div class="stats">
+              <div>
+                <div class="n">{((c.hit_rate ?? 0) * 100).toFixed(0)}%</div>
+                <div class="l">directional hit rate</div>
+              </div>
+              <div>
+                <div class="n">{c.evaluated}</div>
+                <div class="l">graded checkpoints</div>
+              </div>
+              <div>
+                <div class={`n ${(c.confidence_weighted_return ?? 0) >= 0 ? "up" : "down"}`}>
+                  {(((c.confidence_weighted_return ?? 0)) * 100).toFixed(1)}%
+                </div>
+                <div class="l">confidence-weighted return</div>
+              </div>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>confidence bucket</th>
+                  <th>n</th>
+                  <th>hit rate</th>
+                </tr>
+              </thead>
+              <tbody>
+                {c.calibration.map((b) => (
+                  <tr>
+                    <td>{b.bucket}</td>
+                    <td>{b.n}</td>
+                    <td>{b.hit_rate !== null ? `${(b.hit_rate * 100).toFixed(0)}%` : "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </>
+        )}
+      </article>
+    ))
+  }
+</Base>
+
+<style>
+  .stats { display: flex; gap: 2rem; margin-bottom: 0.75rem; }
+  .n { font-size: 1.5rem; font-weight: 800; }
+  .n.up { color: var(--buy); }
+  .n.down { color: var(--sell); }
+  .l { color: var(--muted); font-size: 0.8rem; }
+  table { border-collapse: collapse; font-size: 0.85rem; }
+  th, td { text-align: left; padding: 0.3rem 0.8rem 0.3rem 0; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 600; }
+</style>

@@ -31,7 +31,9 @@ def make_embed_report(embedder: Embedder) -> Any:
 
 def blog_export(session: Session, payload: dict[str, Any]) -> str:
     from bullwright_api.export_blog import export_published
+    from bullwright_api.export_site_data import export_site_data
 
     out_dir = Path(payload.get("out_dir", "apps/web/src/content"))
     n = export_published(session, out_dir)
-    return f"exported {n} published reports"
+    counts = export_site_data(session, out_dir.parent if out_dir.name == "content" else out_dir)
+    return f"exported {n} published reports; site data {counts}"

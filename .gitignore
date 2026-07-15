@@ -163,3 +163,4 @@ data/snapshots/
 
 # --- Blog content is generated from the DB (bw export-blog) -----
 apps/web/src/content/reports/*.md
+apps/web/src/data/generated/

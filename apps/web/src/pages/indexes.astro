@@ -1,0 +1,44 @@
+---
+import Base from "../layouts/Base.astro";
+import { indexes } from "../lib/siteData";
+
+const rows = indexes();
+const weights: Record<string, number> = {
+  value: 0.2,
+  momentum: 0.25,
+  quality: 0.25,
+  volatility: 0.1,
+  sentiment: 0.2,
+};
+---
+
+<Base title="Index methodology">
+  <h1>How the Bullwright Score works</h1>
+  <p>
+    Each index turns point-in-time data for one ticker into a raw value, which is
+    normalized cross-sectionally (winsorized at p5/p95, min-max to 0–100) across the
+    watchlist for that date. The composite is a weighted blend; missing indexes
+    redistribute their weight pro-rata, and if more than half the weight is missing the
+    score is reported as insufficient data — never a fake neutral.
+  </p>
+  {rows.length === 0 && <p class="meta">run <code>bw quant score</code> + <code>bw export-blog</code> to populate this page</p>}
+  {
+    rows.map((idx) => (
+      <article class="card">
+        <h2 style="margin:0 0 0.2rem;">
+          {idx.index_key}
+          <span class="meta" style="font-weight:400;">
+            {" "}
+            v{idx.version} · {idx.direction.replaceAll("_", " ")} · default weight{" "}
+            {((weights[idx.index_key] ?? 0) * 100).toFixed(0)}%
+          </span>
+        </h2>
+        <p style="margin:0.2rem 0 0;">{idx.description}</p>
+      </article>
+    ))
+  }
+  <p class="meta">
+    Look-ahead is structurally impossible: index code can only see data observed on or
+    before the scoring date, and a canary test enforces it for every index, forever.
+  </p>
+</Base>
