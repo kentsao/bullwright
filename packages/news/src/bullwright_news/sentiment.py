@@ -65,13 +65,21 @@ class OllamaSentimentAnalyzer:
                 ],
                 "format": SCHEMA,
                 "stream": False,
-                "options": {"temperature": 0},
+                # think must be OFF: thinking-capable models otherwise spend
+                # ~60s reasoning per headline and return empty content
+                "think": False,
+                "options": {"temperature": 0, "num_predict": 200},
             },
             timeout=120.0,
         )
         resp.raise_for_status()
-        content = resp.json().get("message", {}).get("content", "{}")
-        parsed = json.loads(content)
+        content = resp.json().get("message", {}).get("content") or ""
+        # Some runtimes ignore `format` and fence the JSON in markdown:
+        # extract the outermost object rather than trusting raw content.
+        start, end = content.find("{"), content.rfind("}")
+        if start == -1 or end <= start:
+            raise ValueError(f"no JSON object in model output: {content[:120]!r}")
+        parsed = json.loads(content[start : end + 1])
         return SentimentResult(
             sentiment=max(-1.0, min(1.0, float(parsed["sentiment"]))),
             relevance=max(0.0, min(1.0, float(parsed["relevance"]))),
