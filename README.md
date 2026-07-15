@@ -49,7 +49,7 @@ prefer a classic activated shell: `source .venv/bin/activate`.
 - [x] Spec + test plan (reviewed; decisions in [ADR-0001](docs/adr/0001-initial-stack.md))
 - [x] Phase 1 — core API + DB + blog (`v0.1.0`)
 - [x] Phase 2 — agent skills, bw-agent CLI, RAG search, gemma harness, ops dashboard
-- [ ] Phase 3 — quant indexes + backtest
+- [x] Phase 3 — quant indexes + backtest (`v0.3.0`)
 - [ ] Phase 4 — UI polish + cloud packaging (billing stays spec-only)
 
 Not deployed to the internet — this is a local-first framework/template.
