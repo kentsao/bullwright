@@ -82,18 +82,27 @@ def test_sec_sync_and_filing_alert(engine, factory, nvda) -> None:  # type: igno
         "NVDA": [
             FilingRecord("0001-26-000042", "NVDA", "8-K", date.today(), "Material event", None),
             FilingRecord("0001-26-000043", "NVDA", "424B2", date.today(), "Prospectus", None),
+            # important but OLD: first-sync backfill must not alert on it
+            FilingRecord(
+                "0001-25-000001",
+                "NVDA",
+                "10-K",
+                date.today() - timedelta(days=200),
+                "Annual report",
+                None,
+            ),
         ]
     }
     with session_scope(factory) as s:
         note = make_sec_sync(FixtureEdgarClient(filings))(s, {})
-        assert note and "inserted 2" in note
+        assert note and "inserted 3" in note
         # idempotent
         again = make_sec_sync(FixtureEdgarClient(filings))(s, {})
         assert again and "inserted 0" in again
 
         alert_scan(s, {})
         filing_alerts = s.scalars(select(Alert).where(Alert.kind == "filing")).all()
-        assert len(filing_alerts) == 1  # only the important 8-K
+        assert len(filing_alerts) == 1  # important 8-K only: not the 424B2, not the OLD 10-K
         assert filing_alerts[0].severity == "high"
         assert "8-K" in filing_alerts[0].message
 

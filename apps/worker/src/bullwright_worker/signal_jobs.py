@@ -156,9 +156,15 @@ def alert_scan(session: Session, payload: dict[str, Any]) -> str:
     raised = 0
     tickers = {t.ticker_id: t.symbol for t in _watchlist(session).values()}
 
-    # Rule 1: new important filings
+    # Rule 1: new important filings. Both gates matter: created_at
+    # (we just learned about it) AND filed_at (it actually IS new) —
+    # otherwise the first EDGAR sync floods alerts with months of history.
     for filing in session.scalars(
-        select(Filing).where(Filing.is_important, Filing.created_at >= lookback)
+        select(Filing).where(
+            Filing.is_important,
+            Filing.created_at >= lookback,
+            Filing.filed_at >= lookback.date(),
+        )
     ).all():
         symbol = tickers.get(filing.ticker_id, "?")
         severity = "high" if filing.form_type in SEVERE_FORMS else "warn"
