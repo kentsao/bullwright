@@ -9,6 +9,7 @@ from bullwright_core.indexes.protocol import Direction
 
 RATING_VALUE = {"strong_buy": 2.0, "buy": 1.0, "hold": 0.0, "sell": -1.0, "strong_sell": -2.0}
 SENTIMENT_HALF_LIFE_DAYS = 90.0
+NEWS_HALF_LIFE_DAYS = 10.0
 
 
 def _finite(x: float) -> float | None:
@@ -111,6 +112,37 @@ class QualityIndex:
         if not parts:
             return None
         return _finite(sum(parts) / len(parts))
+
+
+class NewsSentimentIndex:
+    """Relevance- and recency-weighted mean of model-analyzed news item
+    sentiment (ADR-0002). Fast half-life (10d): news is weather. None
+    when no analyzed items — weight redistribution handles absence."""
+
+    key = "news_sentiment"
+    version = "1.0"
+    direction = Direction.HIGHER_BETTER
+    requires = frozenset({"news"})
+    min_history_days = 0
+    description = "Model-analyzed news sentiment, relevance-weighted, 10-day half-life."
+
+    def compute(self, ctx: IndexContext) -> float | None:
+        items = ctx.news()
+        if not items:
+            return None
+        num = 0.0
+        den = 0.0
+        for item in items:
+            age_days = (ctx.as_of - item.published).days
+            if age_days > 45:  # stale news carries ~0 weight anyway; cut the tail
+                continue
+            decay = 0.5 ** (age_days / NEWS_HALF_LIFE_DAYS)
+            w = max(0.0, min(1.0, item.relevance)) * decay
+            num += max(-1.0, min(1.0, item.sentiment)) * w
+            den += w
+        if den <= 0:
+            return None
+        return _finite(num / den)
 
 
 class SentimentIndex:

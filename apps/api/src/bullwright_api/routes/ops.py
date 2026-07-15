@@ -9,7 +9,16 @@ import html
 from datetime import UTC, datetime
 from typing import Any
 
-from bullwright_db.models import Agent, AgentRun, AuditEvent, Job, Report, Ticker
+from bullwright_db.models import (
+    Agent,
+    AgentRun,
+    Alert,
+    AuditEvent,
+    Job,
+    Report,
+    Schedule,
+    Ticker,
+)
 from fastapi import APIRouter
 from fastapi.responses import HTMLResponse
 from sqlalchemy import func, select
@@ -51,7 +60,8 @@ def _page(title: str, body: str) -> HTMLResponse:
         f"<style>{_CSS}</style></head><body><main>"
         "<nav><a href='/ops'>overview</a><a href='/ops/queue'>review queue</a>"
         "<a href='/ops/jobs'>jobs</a><a href='/ops/runs'>runs</a>"
-        "<a href='/ops/audit'>audit</a></nav>"
+        "<a href='/ops/audit'>audit</a>"
+        "<a href='/ops/alerts'>alerts</a><a href='/ops/schedules'>schedules</a></nav>"
         f"<h1>{html.escape(title)}</h1>{body}"
         "<p class='muted' style='margin-top:3rem'>bw ops · dev-only surface · "
         "reads the live DB, writes nothing</p></main></body></html>"
@@ -209,6 +219,53 @@ def runs(session: SessionDep) -> HTMLResponse:
                 for r in rows
             ],
         ),
+    )
+
+
+@router.get("/alerts", response_class=HTMLResponse)
+def alerts_page(session: SessionDep) -> HTMLResponse:
+    tickers = {t.ticker_id: t.symbol for t in session.scalars(select(Ticker)).all()}
+    rows = session.scalars(select(Alert).order_by(Alert.created_at.desc()).limit(100)).all()
+    return _page(
+        "alerts (last 100)",
+        _table(
+            ["when", "severity", "kind", "ticker", "message", "ack"],
+            [
+                [
+                    _ago(a.created_at),
+                    a.severity,
+                    a.kind,
+                    tickers.get(a.ticker_id or "", ""),
+                    a.message,
+                    "yes" if a.acknowledged_at else "",
+                ]
+                for a in rows
+            ],
+        ),
+    )
+
+
+@router.get("/schedules", response_class=HTMLResponse)
+def schedules_page(session: SessionDep) -> HTMLResponse:
+    rows = session.scalars(select(Schedule).order_by(Schedule.name)).all()
+    return _page(
+        "schedules",
+        _table(
+            ["name", "kind", "every", "enabled", "next run", "last enqueued", "by"],
+            [
+                [
+                    s.name,
+                    s.job_kind,
+                    f"{s.interval_minutes}m",
+                    "on" if s.enabled else "PAUSED",
+                    _ago(s.next_run_at) if s.next_run_at else "",
+                    _ago(s.last_enqueued_at),
+                    s.created_by,
+                ]
+                for s in rows
+            ],
+        )
+        + "<p class='muted'>manage via `bw schedules` or POST /v1/schedules</p>",
     )
 
 

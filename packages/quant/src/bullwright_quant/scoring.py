@@ -5,13 +5,14 @@ import hashlib
 from datetime import date
 
 import numpy as np
-from bullwright_core.indexes import INDEX_REGISTRY, IndexContext, VerdictObs
+from bullwright_core.indexes import INDEX_REGISTRY, IndexContext, NewsObs, VerdictObs
 from bullwright_core.indexes.protocol import Direction
 from bullwright_db.models import (
     CompositeScore,
     Fundamental,
     IndexDefinition,
     IndexScore,
+    NewsItem,
     PriceBar,
     Report,
     Ticker,
@@ -129,7 +130,21 @@ def _build_context(session: Session, ticker: Ticker, as_of: date) -> IndexContex
                 float(r.verdict.get("confidence", 0.5)),
             )
         )
-    return IndexContext(ticker.symbol, as_of, bars, fundamentals, verdicts)  # type: ignore[arg-type]
+    news = []
+    for n_row in session.scalars(
+        select(NewsItem).where(
+            NewsItem.ticker_id == ticker.ticker_id,
+            NewsItem.sentiment.is_not(None),
+        )
+    ).all():
+        if n_row.sentiment is None or n_row.relevance is None:
+            continue
+        if n_row.published_at.date() > as_of:
+            continue
+        news.append(
+            NewsObs(n_row.published_at.date(), float(n_row.sentiment), float(n_row.relevance))
+        )
+    return IndexContext(ticker.symbol, as_of, bars, fundamentals, verdicts, news)  # type: ignore[arg-type]
 
 
 def compute_index_scores(session: Session, score_dates: list[date]) -> int:

@@ -11,17 +11,52 @@ import socket
 import time
 import traceback
 from collections.abc import Callable
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
+from bullwright_core.ids import new_id
 from bullwright_db import make_session_factory
-from bullwright_db.models import Job
+from bullwright_db.models import Job, Schedule
 from sqlalchemy import Engine, select
 from sqlalchemy.orm import Session
 
 log = logging.getLogger("bw.worker")
 
 Handler = Callable[[Session, dict[str, Any]], str | None]
+
+
+def tick_schedules(session: Session) -> int:
+    """Enqueue jobs for due schedules (ADR-0002 §5). next_run_at advances
+    in the same transaction as the enqueue, and rows are claimed with
+    row locks — double-firing requires two workers to win the same lock,
+    which the DB forbids. Missed slots are skipped, not backfilled."""
+    now = datetime.now(UTC)
+    due = session.scalars(
+        select(Schedule)
+        .where(Schedule.enabled, Schedule.next_run_at <= now)
+        .with_for_update(skip_locked=True)
+    ).all()
+    enqueued = 0
+    for schedule in due:
+        session.add(
+            Job(
+                job_id=new_id("job"),
+                kind=schedule.job_kind,
+                payload=dict(schedule.payload) | {"schedule_id": schedule.schedule_id},
+            )
+        )
+        schedule.last_enqueued_at = now
+        step = timedelta(minutes=schedule.interval_minutes)
+        # SQLite returns naive datetimes; they were stored as UTC
+        base = schedule.next_run_at
+        if base.tzinfo is None:
+            base = base.replace(tzinfo=UTC)
+        next_run = base + step
+        while next_run <= now:  # skip missed slots
+            next_run += step
+        schedule.next_run_at = next_run
+        enqueued += 1
+    return enqueued
 
 
 class JobRunner:
@@ -50,9 +85,12 @@ class JobRunner:
         return job
 
     def run_once(self) -> bool:
-        """Process at most one job. Returns True if a job was processed."""
+        """Tick schedules, then process at most one job. Returns True if
+        a job was processed."""
         session = self.factory()
         try:
+            if tick_schedules(session):
+                session.commit()
             job = self._claim(session)
             if job is None:
                 session.rollback()

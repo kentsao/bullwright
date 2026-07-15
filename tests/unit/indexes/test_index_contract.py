@@ -6,7 +6,7 @@ import math
 from datetime import date, timedelta
 
 import pytest
-from bullwright_core.indexes import INDEX_REGISTRY, IndexContext, VerdictObs
+from bullwright_core.indexes import INDEX_REGISTRY, IndexContext, NewsObs, VerdictObs
 from bullwright_core.indexes.protocol import Direction, Index
 
 
@@ -44,6 +44,10 @@ def full_context(as_of: date = date(2026, 6, 30)) -> IndexContext:
             VerdictObs(date(2026, 6, 15), "buy", 0.8),
             VerdictObs(date(2026, 4, 1), "hold", 0.5),
         ],
+        news=[
+            NewsObs(date(2026, 6, 28), 0.6, 0.9),
+            NewsObs(date(2026, 6, 20), -0.2, 0.5),
+        ],
     )
 
 
@@ -54,7 +58,7 @@ ALL_INDEXES = sorted(INDEX_REGISTRY.values(), key=lambda i: i.key)
 def test_satisfies_protocol(idx: Index) -> None:
     assert isinstance(idx, Index)
     assert idx.direction in (Direction.HIGHER_BETTER, Direction.LOWER_BETTER)
-    assert idx.requires <= {"price_bars", "fundamentals", "reports"}
+    assert idx.requires <= {"price_bars", "fundamentals", "reports", "news"}
 
 
 @pytest.mark.parametrize("idx", ALL_INDEXES, ids=lambda i: i.key)
@@ -87,6 +91,7 @@ def test_lookahead_canary(idx: Index) -> None:
         bars=synth_bars(200),
         fundamentals=[(date(2026, 3, 1), {"pe": 20.0, "roe": 0.25})],
         verdicts=[VerdictObs(date(2026, 3, 15), "buy", 0.8)],
+        news=[NewsObs(date(2026, 3, 20), 0.4, 0.8)],
     )
     poisoned = IndexContext(
         "TEST",
@@ -99,6 +104,10 @@ def test_lookahead_canary(idx: Index) -> None:
         verdicts=[
             VerdictObs(date(2026, 3, 15), "buy", 0.8),
             VerdictObs(date(2026, 4, 3), "strong_sell", 1.0),
+        ],
+        news=[
+            NewsObs(date(2026, 3, 20), 0.4, 0.8),
+            NewsObs(date(2026, 4, 5), -1.0, 1.0),
         ],
     )
     assert idx.compute(clean) == idx.compute(poisoned)

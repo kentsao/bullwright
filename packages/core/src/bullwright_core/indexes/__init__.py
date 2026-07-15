@@ -9,7 +9,7 @@ Look-ahead is structurally impossible: IndexContext exposes only data
 observed on or before its `as_of` date — there is no API for the future.
 """
 
-from bullwright_core.indexes.context import IndexContext, VerdictObs
+from bullwright_core.indexes.context import IndexContext, NewsObs, VerdictObs
 from bullwright_core.indexes.protocol import Direction, Index
 from bullwright_core.indexes.registry import INDEX_REGISTRY, get_index
 
@@ -18,6 +18,7 @@ __all__ = [
     "Direction",
     "Index",
     "IndexContext",
+    "NewsObs",
     "VerdictObs",
     "get_index",
 ]

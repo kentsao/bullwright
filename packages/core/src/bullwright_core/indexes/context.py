@@ -17,6 +17,15 @@ class VerdictObs:
     confidence: float
 
 
+@dataclass(frozen=True)
+class NewsObs:
+    """One analyzed news item: model-scored sentiment and relevance."""
+
+    published: date
+    sentiment: float  # -1..1
+    relevance: float  # 0..1
+
+
 class IndexContext:
     def __init__(
         self,
@@ -25,6 +34,7 @@ class IndexContext:
         bars: list[tuple[date, float]],  # (bar_date, adj_close), any order
         fundamentals: list[tuple[date, dict[str, Any]]] | None = None,
         verdicts: list[VerdictObs] | None = None,
+        news: list[NewsObs] | None = None,
     ) -> None:
         self.ticker = ticker
         self.as_of = as_of
@@ -35,6 +45,7 @@ class IndexContext:
         )
         self._latest_fundamentals = past_fundamentals[-1][1] if past_fundamentals else None
         self._verdicts = [v for v in (verdicts or []) if v.published <= as_of]
+        self._news = [n for n in (news or []) if n.published <= as_of]
 
     def closes(self, n: int) -> list[float]:
         """Last n adjusted closes up to as_of (oldest first); may be shorter."""
@@ -50,3 +61,7 @@ class IndexContext:
     def verdicts(self) -> list[VerdictObs]:
         """Published report verdicts up to as_of."""
         return list(self._verdicts)
+
+    def news(self) -> list[NewsObs]:
+        """Analyzed news items up to as_of."""
+        return list(self._news)
