@@ -17,7 +17,14 @@ const pricePoints = ticker.prices as [string, number | null][];
 const compositePoints = ticker.composite.map(
   (c) => [c[0], c[1]] as [string, number | null],
 );
-const indexOrder = ["momentum", "value", "quality", "volatility", "sentiment"];
+const indexOrder = [
+  "momentum",
+  "value",
+  "quality",
+  "volatility",
+  "sentiment",
+  "news_sentiment",
+];
 const consensus = ticker.verdicts.length >= 2;
 ---
 

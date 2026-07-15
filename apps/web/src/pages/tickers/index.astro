@@ -22,6 +22,7 @@ const rows = tickers().sort((a, b) => (a.latest_rank ?? 99) - (b.latest_rank ?? 
             <th>quality</th>
             <th>volatility</th>
             <th>sentiment</th>
+            <th>news</th>
           </tr>
         </thead>
         <tbody>
@@ -37,7 +38,7 @@ const rows = tickers().sort((a, b) => (a.latest_rank ?? 99) - (b.latest_rank ?? 
               <td>
                 <strong>{t.latest_score?.toFixed(1) ?? "—"}</strong>
               </td>
-              {["momentum", "value", "quality", "volatility", "sentiment"].map((k) => (
+              {["momentum", "value", "quality", "volatility", "sentiment", "news_sentiment"].map((k) => (
                 <td>{t.latest_indexes[k]?.toFixed(0) ?? "—"}</td>
               ))}
             </tr>
@@ -47,7 +48,7 @@ const rows = tickers().sort((a, b) => (a.latest_rank ?? 99) - (b.latest_rank ?? 
     )
   }
   <p class="meta">
-    Composite = weighted blend of the five indexes (see <a href="/indexes/">methodology</a>).
+    Composite = weighted blend of the six indexes (see <a href="/indexes/">methodology</a>).
     “—” means insufficient data, never a fake neutral.
   </p>
 </Base>

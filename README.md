@@ -8,10 +8,12 @@ Gemini, local Ollama models) do the research legwork through a well-defined
 API and skill set. It ships as a template/monorepo you can run entirely on
 your own machine, with a clear path to a cloud deployment later.
 
-This repo is currently in the **spec phase**. Nothing here is implemented
-yet — the goal of this phase is to nail down the contracts (API, DB schema,
-agent skills, index protocol, test plan) before writing code, so the build
-goes fast and doesn't need to be re-architected halfway through.
+The framework is **fully implemented** (v0.5.0): agents research through
+a locked-down API, humans approve, reports publish to a static blog,
+RAG makes the corpus searchable, news/SEC signals and agent verdicts
+feed a six-index quant score, backtests are bit-reproducible, and a
+scorecard grades every agent against what prices actually did. Specs
+came first and still define every contract — see the table below.
 
 ## Start here
 
@@ -131,11 +133,25 @@ export BW_API_KEY=<the key printed above>
 uv run bw-agent ping                     # verify connectivity + auth
 ```
 
-Unattended local-model loops (headlines in, submitted drafts out):
+**Local model as an agent (no cloud, no cost).** Your Ollama model
+gets its own identity and key, then runs unattended loops through the
+harness — tool-whitelisted, budgeted, and unable to publish by design:
 
 ```bash
+uv run bw agents create gemma-local --kind local --model gemma4:12b-mlx
+uv run bw keys create --agent gemma-local --scopes reports:write,reports:read,search:read
+
+export BW_API_KEY=<the gemma-local key>
+export BW_LOCAL_MODEL=gemma4:12b-mlx     # any Ollama model with tool calling
+
+# headlines in, schema-valid submitted drafts out:
 uv run bw-harness run news_sweep --input data/inbox/news/2026-07-15.json
 ```
+
+The same local model also powers news sentiment scoring
+(`bw signals analyze`) and RAG embeddings — one Ollama install drives
+the whole local stack. Loops are defined in `agents/harness/tasks.yaml`;
+add your own with instructions + budgets, no code required.
 
 ### 7. Review and publish (the human gate)
 
@@ -149,12 +165,18 @@ curl -X POST http://127.0.0.1:8600/v1/reports/<report_id>/publish \
      -H "Authorization: Bearer $BW_ADMIN_KEY"
 ```
 
-### 8. Build the blog
+### 8. Open the UI
 
 ```bash
-uv run bw export-blog                    # published reports + chart data
-cd apps/web && npm install && npm run dev   # http://localhost:4321
+uv run bw ui        # refreshes blog data, starts the blog dev server
 ```
+
+That's the whole command: **blog at http://localhost:4321** (score
+dashboard, per-ticker charts, consensus diffs, agent scorecard) and the
+**ops dashboard at http://127.0.0.1:8600/ops** (review queue, jobs,
+alerts, schedules — needs `bw serve` running). For a production build:
+`uv run bw export-blog && cd apps/web && npm run build` → static files
+in `apps/web/dist/`, host anywhere.
 
 ### All-in-one alternative: Docker
 
