@@ -88,6 +88,107 @@ def export_blog_cmd(
     typer.echo(f"exported {n} published report(s) to {out}")
 
 
+quant_app = typer.Typer(help="Quant: ingest, score, backtest", no_args_is_help=True)
+app.add_typer(quant_app, name="quant")
+
+
+@quant_app.command("ingest")
+def quant_ingest(
+    provider: str = typer.Option("fixture", help="fixture | yfinance"),
+    days: int = typer.Option(400, help="calendar days of history"),
+) -> None:
+    """Fetch daily bars + fundamentals for the whole watchlist."""
+    from datetime import date, timedelta
+
+    from bullwright_quant import get_provider, ingest_fundamentals, ingest_prices
+
+    with session_scope(_factory()) as s:
+        symbols = [t.symbol for t in s.scalars(select(Ticker).where(Ticker.is_active)).all()]
+        if not symbols:
+            raise typer.BadParameter("watchlist is empty — `bw tickers add` first")
+        p = get_provider(provider)
+        end = date.today()
+        counts = ingest_prices(s, p, symbols, end - timedelta(days=days), end)
+        n_fund = ingest_fundamentals(s, p, symbols)
+    typer.echo(f"bars ingested: {counts}")
+    typer.echo(f"fundamentals rows: {n_fund}")
+
+
+@quant_app.command("score")
+def quant_score(
+    from_date: str = typer.Option(..., "--from"),
+    to_date: str = typer.Option(..., "--to"),
+    profile: str = typer.Option("default"),
+) -> None:
+    """Compute index + composite scores (weekly cadence) over a window."""
+    from datetime import date
+
+    from bullwright_db.models import WeightProfile
+    from bullwright_quant import (
+        compute_composites,
+        compute_index_scores,
+        default_profile,
+        sync_index_definitions,
+        universe_dates,
+    )
+
+    with session_scope(_factory()) as s:
+        sync_index_definitions(s)
+        dates = [
+            d
+            for d in universe_dates(s, date.fromisoformat(from_date), date.fromisoformat(to_date))
+            if d.weekday() == 0
+        ]
+        if not dates:
+            raise typer.BadParameter("no trading Mondays in window — ingest prices first")
+        n_idx = compute_index_scores(s, dates)
+        wp = (
+            default_profile(s)
+            if profile == "default"
+            else s.scalars(select(WeightProfile).where(WeightProfile.name == profile)).first()
+        )
+        if wp is None:
+            raise typer.BadParameter(f"unknown profile {profile!r}")
+        n_comp = compute_composites(s, wp, dates)
+    typer.echo(f"index scores: {n_idx}; composites: {n_comp}; dates: {len(dates)}")
+
+
+@quant_app.command("backtest")
+def quant_backtest(
+    from_date: str = typer.Option(..., "--from"),
+    to_date: str = typer.Option(..., "--to"),
+    profile: str = typer.Option("default"),
+    top_n: int = typer.Option(5),
+    cost_bps: float = typer.Option(10.0),
+) -> None:
+    """Run a backtest synchronously and print metrics."""
+    import json as json_mod
+    from datetime import date
+
+    from bullwright_db.models import WeightProfile
+    from bullwright_quant import BacktestConfig, default_profile, run_backtest
+
+    with session_scope(_factory()) as s:
+        wp = (
+            default_profile(s)
+            if profile == "default"
+            else s.scalars(select(WeightProfile).where(WeightProfile.name == profile)).first()
+        )
+        if wp is None:
+            raise typer.BadParameter(f"unknown profile {profile!r}")
+        symbols = [t.symbol for t in s.scalars(select(Ticker).where(Ticker.is_active)).all()]
+        out = run_backtest(
+            s,
+            wp,
+            symbols,
+            date.fromisoformat(from_date),
+            date.fromisoformat(to_date),
+            BacktestConfig(top_n=top_n, cost_bps=cost_bps),
+        )
+    typer.echo(json_mod.dumps(out.metrics, indent=2))
+    typer.secho("3-6 month backtests are weather, not climate.", fg=typer.colors.YELLOW)
+
+
 @agents_app.command("create")
 def agents_create(
     name: str,

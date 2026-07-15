@@ -10,6 +10,7 @@ from bullwright_rag import Embedder, OllamaEmbedder
 from sqlalchemy import Engine
 
 from bullwright_worker.jobs import blog_export, make_embed_report
+from bullwright_worker.quant_jobs import backtest_job, composite_calc, index_calc, price_ingest
 from bullwright_worker.runner import JobRunner
 
 
@@ -21,6 +22,10 @@ def build_runner(engine: Engine | None = None, embedder: Embedder | None = None)
         handlers={
             "embed_report": make_embed_report(embedder),
             "blog_export": blog_export,
+            "price_ingest": price_ingest,
+            "index_calc": index_calc,
+            "composite_calc": composite_calc,
+            "backtest": backtest_job,
         },
     )
 

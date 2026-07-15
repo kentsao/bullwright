@@ -7,6 +7,7 @@ dependencies = [
     "bullwright-core",
     "bullwright-db",
     "bullwright-rag",
+    "bullwright-quant",
     "fastapi>=0.111",
     "uvicorn>=0.30",
     "pydantic-settings>=2.3",
@@ -28,3 +29,4 @@ packages = ["src/bullwright_api"]
 bullwright-core = { workspace = true }
 bullwright-db = { workspace = true }
 bullwright-rag = { workspace = true }
+bullwright-quant = { workspace = true }

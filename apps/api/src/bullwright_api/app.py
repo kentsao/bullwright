@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import Engine
 
 from bullwright_api.errors import Problem, install_handlers, problem_response
-from bullwright_api.routes import meta, ops, reports, runs, search, tickers
+from bullwright_api.routes import meta, ops, quant, reports, runs, search, tickers
 from bullwright_api.settings import settings
 
 
@@ -62,6 +62,7 @@ def create_app(engine: Engine | None = None, embedder: object | None = None) -> 
     app.include_router(tickers.router, prefix=v1_prefix)
     app.include_router(runs.router, prefix=v1_prefix)
     app.include_router(search.router, prefix=v1_prefix)
+    app.include_router(quant.router, prefix=v1_prefix)
     if cfg.env == "dev":
         # Operator troubleshooting dashboard — never mounted outside dev
         # (docs/ARCHITECTURE.md §5b). Unauthenticated by design: dev binds
