@@ -76,6 +76,36 @@ def openapi_export(out: Path = Path("docs/openapi.json")) -> None:
     typer.echo(f"wrote {out}")
 
 
+@app.command("ui")
+def ui(no_export: bool = typer.Option(False, "--no-export", help="skip data refresh")) -> None:
+    """Refresh blog data and open the UI (blog dev server + dashboard URL)."""
+    import os as os_mod
+    import shutil
+    import subprocess
+
+    if not no_export:
+        from bullwright_api.export_blog import export_published
+        from bullwright_api.export_site_data import export_site_data
+
+        with session_scope(_factory()) as s:
+            export_published(s, Path("apps/web/src/content"))
+            counts = export_site_data(s, Path("apps/web/src"))
+        typer.echo(f"site data refreshed: {counts}")
+    npm = shutil.which("npm")
+    if npm is None:
+        raise typer.BadParameter("npm not found — install Node.js first")
+    if not Path("apps/web/node_modules").exists():
+        typer.echo("installing blog dependencies (first run)...")
+        subprocess.run(  # noqa: S603 — fixed argv, resolved path, no user input
+            [npm, "install", "--no-fund", "--no-audit"], cwd="apps/web", check=True
+        )
+    typer.secho("blog:      http://localhost:4321", fg=typer.colors.GREEN, bold=True)
+    typer.secho(
+        "dashboard: http://127.0.0.1:8600/ops (needs `bw serve` running)", fg=typer.colors.GREEN
+    )
+    os_mod.execvp(npm, [npm, "--prefix", "apps/web", "run", "dev"])  # noqa: S606
+
+
 @app.command("export-blog")
 def export_blog_cmd(
     out: Path = Path("apps/web/src/content"),
