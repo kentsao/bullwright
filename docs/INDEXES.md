@@ -26,7 +26,8 @@ methodology section auto-rendered on the blog from `index_definitions`.
 | `momentum` | higher_better | 126-day return skipping most recent 21 days (12-1 style, halved for our horizon) |
 | `quality` | higher_better | blended rank of ROE, gross margin, debt/equity (inverted) |
 | `volatility` | lower_better | 63-day annualized std of daily log returns |
-| `sentiment` | higher_better | confidence-weighted mean of published report verdict ratings, 90-day half-life decay; neutral 50 when no coverage |
+| `sentiment` | higher_better | confidence-weighted mean of published report verdict ratings (analyst sentiment), 90-day half-life decay; neutral 50 when no coverage |
+| `news_sentiment` | higher_better | relevance x recency-weighted mean of model-analyzed news item sentiment, 10-day half-life; missing when no analyzed news (ADR-0002) |
 
 `sentiment` is the loop-closer: agent research feeds the quant layer.
 

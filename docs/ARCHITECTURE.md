@@ -108,6 +108,14 @@ optionally swapped to a real queue later. Jobs:
 | `composite_calc` | index_calc done / weights changed | compose scores per weight profile |
 | `backtest` | manual/API | run backtest, store artifact + metrics |
 | `blog_export` | report published | regenerate `apps/web/src/content` + rebuild |
+| `news_crawl` | schedule | NewsProvider fetch -> dedupe -> `news_items` (ADR-0002) |
+| `sec_sync` | schedule | EDGAR submissions -> `filings`; important forms raise alerts |
+| `sentiment_analyze` | schedule | model-score unanalyzed news items (SentimentAnalyzer) |
+| `alert_scan` | schedule | rule evaluation -> `alerts` (filings, sentiment spikes, rank jumps) |
+
+The worker loop also ticks the `schedules` table: due rows enqueue the
+jobs above, idempotent per (schedule, due slot). Scheduling is data, not
+cron config (ADR-0002 §5).
 
 ## 5. apps/web (blog)
 
