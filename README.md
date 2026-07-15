@@ -50,7 +50,7 @@ prefer a classic activated shell: `source .venv/bin/activate`.
 - [x] Phase 1 — core API + DB + blog (`v0.1.0`)
 - [x] Phase 2 — agent skills, bw-agent CLI, RAG search, gemma harness, ops dashboard
 - [x] Phase 3 — quant indexes + backtest (`v0.3.0`)
-- [ ] Phase 4 — UI polish + cloud packaging (billing stays spec-only)
+- [x] Phase 4 — UI polish + cloud packaging (`v0.4.0`) — MVP complete 🐂
 
 Not deployed to the internet — this is a local-first framework/template.
 GitHub is used for version control only (see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#github--cicd)).
