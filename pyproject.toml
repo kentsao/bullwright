@@ -13,7 +13,7 @@ link-mode = "copy"
 
 [tool.uv.workspace]
 # List members explicitly; add each package/app here as it lands.
-members = ["packages/core", "packages/db", "packages/clients", "apps/api", "rag", "apps/worker", "agents/harness"]
+members = ["packages/core", "packages/db", "packages/clients", "packages/quant", "apps/api", "rag", "apps/worker", "agents/harness"]
 
 [dependency-groups]
 dev = [
@@ -26,6 +26,7 @@ dev = [
     "httpx2>=2.5.0",
     "psycopg[binary]>=3.1",
     "types-pyyaml>=6.0.12.20260518",
+    "hypothesis>=6.156.6",
 ]
 
 [tool.ruff]
