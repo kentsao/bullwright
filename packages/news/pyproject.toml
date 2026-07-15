@@ -1,0 +1,22 @@
+[project]
+name = "bullwright-news"
+version = "0.1.0"
+description = "Bullwright news signals: provider protocol, RSS + EDGAR adapters, sentiment analyzers (ADR-0002)."
+requires-python = ">=3.12"
+dependencies = [
+    "bullwright-core",
+    "bullwright-db",
+    "feedparser>=6.0",
+    "httpx2>=0.1",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/bullwright_news"]
+
+[tool.uv.sources]
+bullwright-core = { workspace = true }
+bullwright-db = { workspace = true }

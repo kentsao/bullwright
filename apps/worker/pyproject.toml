@@ -8,6 +8,7 @@ dependencies = [
     "bullwright-db",
     "bullwright-rag",
     "bullwright-api",
+    "bullwright-news",
 ]
 
 [project.scripts]
@@ -25,3 +26,4 @@ bullwright-core = { workspace = true }
 bullwright-db = { workspace = true }
 bullwright-rag = { workspace = true }
 bullwright-api = { workspace = true }
+bullwright-news = { workspace = true }

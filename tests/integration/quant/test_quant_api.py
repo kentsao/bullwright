@@ -73,7 +73,7 @@ def test_scores_endpoint_includes_disclaimer(client, market_key, quant_db) -> No
 def test_indexes_listing(client, market_key, quant_db) -> None:  # type: ignore[no-untyped-def]
     r = client.get("/v1/indexes", headers=auth(market_key))
     keys = {i["index_key"] for i in r.json()}
-    assert keys == {"value", "momentum", "quality", "volatility", "sentiment"}
+    assert keys == {"value", "momentum", "quality", "volatility", "sentiment", "news_sentiment"}
 
 
 def test_weight_profile_validation(client, admin_key, market_key, quant_db) -> None:  # type: ignore[no-untyped-def]

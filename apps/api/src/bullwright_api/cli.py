@@ -192,6 +192,109 @@ def quant_backtest(
     typer.secho("3-6 month backtests are weather, not climate.", fg=typer.colors.YELLOW)
 
 
+signals_app = typer.Typer(
+    help="News/SEC/sentiment/alerts (run synchronously)", no_args_is_help=True
+)
+schedules_app = typer.Typer(help="Recurring schedules", no_args_is_help=True)
+app.add_typer(signals_app, name="signals")
+app.add_typer(schedules_app, name="schedules")
+
+
+@signals_app.command("crawl")
+def signals_crawl(provider: str = typer.Option("rss", help="rss | fixture")) -> None:
+    """Fetch news for the watchlist now."""
+    from bullwright_worker.signal_jobs import news_crawl
+
+    with session_scope(_factory()) as s:
+        typer.echo(news_crawl(s, {"provider": provider}))
+
+
+@signals_app.command("sec")
+def signals_sec() -> None:
+    """Sync SEC EDGAR filings for the watchlist now."""
+    from bullwright_news import EdgarClient
+    from bullwright_worker.signal_jobs import make_sec_sync
+
+    with session_scope(_factory()) as s:
+        typer.echo(make_sec_sync(EdgarClient())(s, {}))
+
+
+@signals_app.command("analyze")
+def signals_analyze(batch: int = typer.Option(20)) -> None:
+    """Sentiment-score unanalyzed news via the local model."""
+    from bullwright_news import OllamaSentimentAnalyzer
+    from bullwright_worker.signal_jobs import make_sentiment_analyze
+
+    with session_scope(_factory()) as s:
+        typer.echo(make_sentiment_analyze(OllamaSentimentAnalyzer())(s, {"batch": batch}))
+
+
+@signals_app.command("scan")
+def signals_scan() -> None:
+    """Evaluate alert rules now."""
+    from bullwright_worker.signal_jobs import alert_scan
+
+    with session_scope(_factory()) as s:
+        typer.echo(alert_scan(s, {}))
+
+
+@schedules_app.command("add")
+def schedules_add(
+    name: str,
+    kind: str = typer.Option(..., help="job kind, e.g. news_crawl"),
+    every: int = typer.Option(..., help="interval in minutes (>=5)"),
+    payload: str = typer.Option("{}", help="JSON payload for the job"),
+) -> None:
+    from datetime import UTC as _UTC
+    from datetime import datetime as _dt
+
+    from bullwright_db.models import Schedule
+
+    with session_scope(_factory()) as s:
+        s.add(
+            Schedule(
+                schedule_id=new_id("job").replace("job_", "sch_", 1),
+                name=name,
+                job_kind=kind,
+                payload=json.loads(payload),
+                interval_minutes=max(5, every),
+                next_run_at=_dt.now(_UTC),
+                created_by="operator",
+            )
+        )
+        typer.echo(f"scheduled {name}: {kind} every {max(5, every)}m")
+
+
+@schedules_app.command("list")
+def schedules_list() -> None:
+    from bullwright_db.models import Schedule
+
+    with session_scope(_factory()) as s:
+        for row in s.scalars(select(Schedule).order_by(Schedule.name)).all():
+            state = "on " if row.enabled else "OFF"
+            typer.echo(
+                f"[{state}] {row.name}: {row.job_kind} every {row.interval_minutes}m "
+                f"(next {row.next_run_at:%Y-%m-%d %H:%M} UTC)"
+            )
+
+
+@schedules_app.command("toggle")
+def schedules_toggle(name: str, enable: bool = typer.Option(...)) -> None:
+    from datetime import UTC as _UTC
+    from datetime import datetime as _dt
+
+    from bullwright_db.models import Schedule
+
+    with session_scope(_factory()) as s:
+        row = s.scalars(select(Schedule).where(Schedule.name == name)).first()
+        if row is None:
+            raise typer.BadParameter(f"no schedule named {name!r}")
+        row.enabled = enable
+        if enable:
+            row.next_run_at = _dt.now(_UTC)
+        typer.echo(f"{name}: {'enabled' if enable else 'paused'}")
+
+
 @agents_app.command("create")
 def agents_create(
     name: str,

@@ -13,7 +13,7 @@ link-mode = "copy"
 
 [tool.uv.workspace]
 # List members explicitly; add each package/app here as it lands.
-members = ["packages/core", "packages/db", "packages/clients", "packages/quant", "apps/api", "rag", "apps/worker", "agents/harness"]
+members = ["packages/core", "packages/db", "packages/clients", "packages/quant", "packages/news", "apps/api", "rag", "apps/worker", "agents/harness"]
 
 [dependency-groups]
 dev = [

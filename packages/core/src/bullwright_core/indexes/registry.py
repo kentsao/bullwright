@@ -1,5 +1,6 @@
 from bullwright_core.indexes.core_indexes import (
     MomentumIndex,
+    NewsSentimentIndex,
     QualityIndex,
     SentimentIndex,
     ValueIndex,
@@ -15,6 +16,7 @@ INDEX_REGISTRY: dict[str, Index] = {
         QualityIndex(),
         VolatilityIndex(),
         SentimentIndex(),
+        NewsSentimentIndex(),
     )
 }
 

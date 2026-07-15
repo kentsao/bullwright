@@ -25,6 +25,7 @@ VALID_SCOPES = frozenset(
         "search:read",
         "market:read",
         "backtest:run",
+        "schedules:write",
         "admin",
     }
 )

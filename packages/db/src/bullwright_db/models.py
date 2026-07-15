@@ -329,6 +329,75 @@ class BacktestRun(TimestampMixin, Base):
     )
 
 
+# --- News, filings, schedules, alerts (ADR-0002) ------------------------
+
+
+class NewsItem(Base):
+    __tablename__ = "news_items"
+
+    news_id: Mapped[str] = mapped_column(String(30), primary_key=True)
+    ticker_id: Mapped[str | None] = mapped_column(ForeignKey("tickers.ticker_id"), index=True)
+    published_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    title: Mapped[str] = mapped_column(String(500))
+    summary: Mapped[str | None] = mapped_column(Text)
+    url: Mapped[str | None] = mapped_column(String(1000))
+    source: Mapped[str] = mapped_column(String(100))  # feed/provider name
+    provider: Mapped[str] = mapped_column(String(30))  # rss | fixture | ...
+    content_hash: Mapped[str] = mapped_column(String(80), unique=True)  # dedupe
+    # sentiment analysis (null until sentiment_analyze runs)
+    sentiment: Mapped[float | None] = mapped_column()  # -1..1
+    relevance: Mapped[float | None] = mapped_column()  # 0..1
+    analyzed_by: Mapped[str | None] = mapped_column(String(100))  # model id
+    analyzed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class Filing(Base):
+    __tablename__ = "filings"
+
+    accession_no: Mapped[str] = mapped_column(String(30), primary_key=True)
+    ticker_id: Mapped[str] = mapped_column(ForeignKey("tickers.ticker_id"), index=True)
+    form_type: Mapped[str] = mapped_column(String(20), index=True)
+    filed_at: Mapped[datetime] = mapped_column(Date, index=True)
+    title: Mapped[str | None] = mapped_column(String(500))
+    url: Mapped[str | None] = mapped_column(String(500))
+    is_important: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class Schedule(TimestampMixin, Base):
+    """Recurring work as data (ADR-0002 §5). The worker ticks this table
+    and enqueues a normal job when next_run_at is due."""
+
+    __tablename__ = "schedules"
+
+    schedule_id: Mapped[str] = mapped_column(String(30), primary_key=True)
+    name: Mapped[str] = mapped_column(String(80), unique=True)
+    job_kind: Mapped[str] = mapped_column(String(40))
+    payload: Mapped[dict[str, Any]] = mapped_column(default=dict)
+    interval_minutes: Mapped[int] = mapped_column(Integer)  # >= 5
+    next_run_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_by: Mapped[str] = mapped_column(String(100))
+    last_enqueued_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class Alert(Base):
+    __tablename__ = "alerts"
+
+    alert_id: Mapped[str] = mapped_column(String(30), primary_key=True)
+    kind: Mapped[str] = mapped_column(String(40), index=True)  # filing|sentiment_spike|rank_jump
+    severity: Mapped[str] = mapped_column(String(10), default="info")  # info|warn|high
+    ticker_id: Mapped[str | None] = mapped_column(ForeignKey("tickers.ticker_id"), index=True)
+    message: Mapped[str] = mapped_column(String(1000))
+    dedupe_key: Mapped[str] = mapped_column(String(120), unique=True)
+    payload: Mapped[dict[str, Any]] = mapped_column(default=dict)
+    acknowledged_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+    __table_args__ = (CheckConstraint("severity IN ('info','warn','high')", name="severity"),)
+
+
 # --- Billing (dormant until BW_BILLING_ENABLED; docs/SUBSCRIPTION.md) ---
 
 
