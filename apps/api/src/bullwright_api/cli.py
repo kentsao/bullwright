@@ -82,10 +82,13 @@ def export_blog_cmd(
 ) -> None:
     """Regenerate blog content from published reports."""
     from bullwright_api.export_blog import export_published
+    from bullwright_api.export_site_data import export_site_data
 
     with session_scope(_factory()) as s:
         n = export_published(s, out)
+        counts = export_site_data(s, out.parent if out.name == "content" else out)
     typer.echo(f"exported {n} published report(s) to {out}")
+    typer.echo(f"site data: {counts}")
 
 
 quant_app = typer.Typer(help="Quant: ingest, score, backtest", no_args_is_help=True)

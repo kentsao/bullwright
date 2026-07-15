@@ -1,0 +1,115 @@
+---
+import { getCollection } from "astro:content";
+import Chart from "../../components/Chart.astro";
+import Base from "../../layouts/Base.astro";
+import { tickers } from "../../lib/siteData";
+
+export async function getStaticPaths() {
+  return tickers().map((t) => ({ params: { symbol: t.symbol }, props: { ticker: t } }));
+}
+
+const { ticker } = Astro.props;
+const reports = (await getCollection("reports"))
+  .filter((r) => r.data.ticker === ticker.symbol)
+  .sort((a, b) => b.data.publishedAt.getTime() - a.data.publishedAt.getTime());
+
+const pricePoints = ticker.prices as [string, number | null][];
+const compositePoints = ticker.composite.map(
+  (c) => [c[0], c[1]] as [string, number | null],
+);
+const indexOrder = ["momentum", "value", "quality", "volatility", "sentiment"];
+const consensus = ticker.verdicts.length >= 2;
+---
+
+<Base title={ticker.symbol}>
+  <p class="meta"><a href="/tickers/">← watchlist</a></p>
+  <h1>
+    {ticker.symbol}
+    {ticker.latest_rank && <span class="pill rankpill">rank #{ticker.latest_rank}</span>}
+  </h1>
+  <p class="meta">{ticker.name ?? ""} {ticker.sector ? `· ${ticker.sector}` : ""}</p>
+
+  <Chart
+    points={pricePoints}
+    label={`adjusted close (${pricePoints.length} sessions)`}
+    formatValue={(v) => v.toFixed(2)}
+  />
+  <Chart
+    points={compositePoints}
+    label="Bullwright Score (weekly)"
+    yMin={0}
+    yMax={100}
+  />
+
+  <h2>index scores (latest)</h2>
+  <div class="bars">
+    {
+      indexOrder.map((k) => {
+        const v = ticker.latest_indexes[k];
+        return (
+          <div class="barrow">
+            <span class="barlabel">{k}</span>
+            <div class="bartrack">
+              {v !== undefined && <div class="barfill" style={`width:${v}%`} />}
+            </div>
+            <span class="barval">{v !== undefined ? v.toFixed(0) : "—"}</span>
+          </div>
+        );
+      })
+    }
+  </div>
+
+  {
+    ticker.verdicts.length > 0 && (
+      <>
+        <h2>{consensus ? "agent consensus — do they agree?" : "latest verdict"}</h2>
+        <div class="consensus">
+          {ticker.verdicts.map((v) => (
+            <a class="card verdictcard" href={`/`}>
+              <div class="meta">
+                {v.agent}
+                {v.model ? ` (${v.model})` : ""} · {v.published}
+              </div>
+              <span class={`pill ${v.rating}`}>{v.rating.replaceAll("_", " ")}</span>
+              <strong style="margin-left:0.4rem;">{(v.confidence * 100).toFixed(0)}%</strong>
+              <p class="meta" style="margin:0.4rem 0 0;">{v.one_liner}</p>
+            </a>
+          ))}
+        </div>
+        {consensus && (
+          <p class="meta">
+            Disagreement between models is signal — read both sides before forming a view.
+          </p>
+        )}
+      </>
+    )
+  }
+
+  <h2>published research</h2>
+  {reports.length === 0 && <p class="meta">no published reports for {ticker.symbol} yet</p>}
+  {
+    reports.map((r) => (
+      <article class="card">
+        <div class="meta">
+          {r.data.reportType.replaceAll("_", " ")} ·{" "}
+          {r.data.publishedAt.toISOString().slice(0, 10)} · by {r.data.author}
+        </div>
+        <a href={`/reports/${r.id}/`}>
+          <strong>{r.data.title}</strong>
+        </a>
+      </article>
+    ))
+  }
+</Base>
+
+<style>
+  .rankpill { margin-left: 0.6rem; color: var(--accent); border-color: var(--accent); vertical-align: middle; }
+  .bars { display: grid; gap: 0.4rem; margin: 0.5rem 0 1.5rem; }
+  .barrow { display: grid; grid-template-columns: 6.5rem 1fr 3rem; align-items: center; gap: 0.6rem; }
+  .barlabel { color: var(--muted); font-size: 0.85rem; }
+  .bartrack { background: var(--card); border: 1px solid var(--border); border-radius: 999px; height: 0.75rem; overflow: hidden; }
+  .barfill { background: var(--accent); height: 100%; border-radius: 999px; }
+  .barval { font-weight: 700; font-size: 0.85rem; text-align: right; }
+  .consensus { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 0.75rem; }
+  .verdictcard { text-decoration: none; color: var(--fg); }
+</style>

@@ -81,6 +81,18 @@ jobs:
           diff -u docs/openapi.json /tmp/openapi.json \
             || (echo "::error::docs/openapi.json is stale — run 'bw openapi-export'" && exit 1)
 
+  docker-build:
+    name: Docker image builds
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: infra/docker/Dockerfile
+          push: false
+          tags: bullwright:ci
+
   blog-build:
     name: Astro build
     runs-on: ubuntu-latest

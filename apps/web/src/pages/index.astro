@@ -1,13 +1,43 @@
 ---
 import { getCollection } from "astro:content";
 import Base from "../layouts/Base.astro";
+import { tickers } from "../lib/siteData";
 
 const reports = (await getCollection("reports")).sort(
   (a, b) => b.data.publishedAt.getTime() - a.data.publishedAt.getTime(),
 );
+
+const movers = tickers()
+  .filter((t) => t.latest_score !== null)
+  .map((t) => ({
+    ...t,
+    delta: t.prev_score !== null && t.latest_score !== null ? t.latest_score - t.prev_score : 0,
+  }))
+  .sort((a, b) => (a.latest_rank ?? 99) - (b.latest_rank ?? 99))
+  .slice(0, 5);
 ---
 
 <Base title="Latest research">
+  {
+    movers.length > 0 && (
+      <>
+        <h1>Bullwright Score — top ranks</h1>
+        <div class="movers">
+          {movers.map((t) => (
+            <a class="card mover" href={`/tickers/${t.symbol}/`}>
+              <div class="rank">#{t.latest_rank}</div>
+              <div class="sym">{t.symbol}</div>
+              <div class="score">{t.latest_score?.toFixed(1)}</div>
+              <div class={`delta ${t.delta >= 0 ? "up" : "down"}`}>
+                {t.delta >= 0 ? "▲" : "▼"} {Math.abs(t.delta).toFixed(1)} w/w
+              </div>
+            </a>
+          ))}
+        </div>
+      </>
+    )
+  }
+
   <h1>Latest research</h1>
   {reports.length === 0 && (
     <p class="meta">
@@ -38,3 +68,24 @@ const reports = (await getCollection("reports")).sort(
     ))
   }
 </Base>
+
+<style>
+  .movers {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+  }
+  .mover {
+    text-align: center;
+    text-decoration: none;
+    color: var(--fg);
+  }
+  .mover:hover { border-color: var(--accent); text-decoration: none; }
+  .rank { color: var(--muted); font-size: 0.8rem; }
+  .sym { font-weight: 800; font-size: 1.2rem; }
+  .score { font-size: 1.6rem; font-weight: 800; color: var(--accent); }
+  .delta { font-size: 0.8rem; }
+  .delta.up { color: var(--buy); }
+  .delta.down { color: var(--sell); }
+</style>

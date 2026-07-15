@@ -1,0 +1,22 @@
+# Fly.io app config STUB — used only if/when you deploy (docs/PLAN.md).
+# The API image serves on 8600; scale the worker as a separate process.
+app = "bullwright"
+primary_region = "nrt"
+
+[build]
+  dockerfile = "../docker/Dockerfile"
+
+[processes]
+  api = "uv run bw serve --host 0.0.0.0"
+  worker = "uv run bw-worker"
+
+[[services]]
+  processes = ["api"]
+  internal_port = 8600
+  protocol = "tcp"
+  # NOTE: exposing the API publicly requires auth hardening beyond the
+  # local-first posture — read docs/API.md §6 before adding handlers here.
+
+[env]
+  BW_ENV = "prod"
+  BW_MARKET_PROVIDER = "fixture"
