@@ -51,6 +51,7 @@ prefer a classic activated shell: `source .venv/bin/activate`.
 - [x] Phase 2 — agent skills, bw-agent CLI, RAG search, gemma harness, ops dashboard
 - [x] Phase 3 — quant indexes + backtest (`v0.3.0`)
 - [x] Phase 4 — UI polish + cloud packaging (`v0.4.0`) — MVP complete 🐂
+- [x] Phase 5 — news/SEC signals, sentiment index, scheduler, alerts (`v0.5.0`)
 
 Not deployed to the internet — this is a local-first framework/template.
 GitHub is used for version control only (see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#github--cicd)).
