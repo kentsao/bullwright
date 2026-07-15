@@ -238,6 +238,97 @@ class ReportChunk(Base):
     __table_args__ = (UniqueConstraint("report_id", "seq"),)
 
 
+# --- Quant (docs/INDEXES.md; phase 3) -----------------------------------
+
+
+class Fundamental(Base):
+    """Point-in-time fundamentals snapshot. `as_of` is when the values
+    were OBSERVED — queries for date D must filter as_of <= D. Free
+    providers only give current snapshots, so history accretes from the
+    day ingestion starts (documented free-data limitation)."""
+
+    __tablename__ = "fundamentals"
+
+    ticker_id: Mapped[str] = mapped_column(ForeignKey("tickers.ticker_id"), primary_key=True)
+    as_of: Mapped[datetime] = mapped_column(Date, primary_key=True)
+    metrics: Mapped[dict[str, Any]] = mapped_column()  # pe, ps, ev_ebitda, roe, gm, de
+    snapshot_id: Mapped[str] = mapped_column(String(80))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class IndexDefinition(TimestampMixin, Base):
+    __tablename__ = "index_definitions"
+
+    index_key: Mapped[str] = mapped_column(String(30), primary_key=True)
+    version: Mapped[str] = mapped_column(String(10))
+    direction: Mapped[str] = mapped_column(String(15))
+    params: Mapped[dict[str, Any]] = mapped_column(default=dict)
+    description: Mapped[str] = mapped_column(Text)
+
+    __table_args__ = (
+        CheckConstraint("direction IN ('higher_better','lower_better')", name="direction"),
+    )
+
+
+class IndexScore(Base):
+    __tablename__ = "index_scores"
+
+    ticker_id: Mapped[str] = mapped_column(ForeignKey("tickers.ticker_id"), primary_key=True)
+    index_key: Mapped[str] = mapped_column(
+        ForeignKey("index_definitions.index_key"), primary_key=True
+    )
+    score_date: Mapped[datetime] = mapped_column(Date, primary_key=True)
+    raw_value: Mapped[float | None] = mapped_column()
+    score: Mapped[float] = mapped_column()  # normalized 0..100
+    inputs_digest: Mapped[str] = mapped_column(String(80))
+
+    __table_args__ = (Index("ix_index_scores_date", "score_date", "index_key"),)
+
+
+class WeightProfile(TimestampMixin, Base):
+    __tablename__ = "weight_profiles"
+
+    profile_id: Mapped[str] = mapped_column(String(30), primary_key=True)
+    name: Mapped[str] = mapped_column(String(60), unique=True)
+    weights: Mapped[dict[str, Any]] = mapped_column()  # {index_key: weight}, sums to 1
+    is_default: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_locked: Mapped[bool] = mapped_column(Boolean, default=False)  # backtested → immutable
+    created_by: Mapped[str] = mapped_column(String(100))
+
+
+class CompositeScore(Base):
+    __tablename__ = "composite_scores"
+
+    ticker_id: Mapped[str] = mapped_column(ForeignKey("tickers.ticker_id"), primary_key=True)
+    profile_id: Mapped[str] = mapped_column(
+        ForeignKey("weight_profiles.profile_id"), primary_key=True
+    )
+    score_date: Mapped[datetime] = mapped_column(Date, primary_key=True)
+    score: Mapped[float | None] = mapped_column()  # None = insufficient data
+    rank: Mapped[int | None] = mapped_column(Integer)
+
+
+class BacktestRun(TimestampMixin, Base):
+    __tablename__ = "backtest_runs"
+
+    backtest_id: Mapped[str] = mapped_column(String(30), primary_key=True)
+    profile_id: Mapped[str] = mapped_column(ForeignKey("weight_profiles.profile_id"))
+    from_date: Mapped[datetime] = mapped_column(Date)
+    to_date: Mapped[datetime] = mapped_column(Date)
+    universe: Mapped[list[Any]] = mapped_column()  # symbols
+    rebalance: Mapped[str] = mapped_column(String(10), default="weekly")
+    config: Mapped[dict[str, Any]] = mapped_column(default=dict)
+    snapshot_id: Mapped[str] = mapped_column(String(80))
+    code_version: Mapped[str] = mapped_column(String(40))
+    status: Mapped[str] = mapped_column(String(10), default="queued")
+    metrics: Mapped[dict[str, Any] | None] = mapped_column()
+    artifact_path: Mapped[str | None] = mapped_column(String(300))
+
+    __table_args__ = (
+        CheckConstraint("status IN ('queued','running','done','failed')", name="status"),
+    )
+
+
 # --- Billing (dormant until BW_BILLING_ENABLED; docs/SUBSCRIPTION.md) ---
 
 
