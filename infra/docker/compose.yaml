@@ -1,0 +1,60 @@
+# Full Bullwright stack:   docker compose -f infra/docker/compose.yaml up
+# API on http://127.0.0.1:8600 (host loopback only), Postgres internal,
+# worker polling. Add the local-LLM services with:  --profile llm
+name: bullwright
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: bullwright
+      POSTGRES_PASSWORD: bullwright   # local compose only — never a public deploy
+      POSTGRES_DB: bullwright
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bullwright"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile
+    environment: &bw_env
+      BW_ENV: dev
+      BW_DB_URL: postgresql+psycopg://bullwright:bullwright@db:5432/bullwright
+      BW_API_HOST: 0.0.0.0
+      BW_OLLAMA_URL: http://ollama:11434
+      BW_MARKET_PROVIDER: fixture
+    ports:
+      - "127.0.0.1:8600:8600"   # loopback only — Bullwright is local-first
+    depends_on:
+      db:
+        condition: service_healthy
+    command: >
+      sh -c "uv run bw db-upgrade && uv run bw serve --host 0.0.0.0"
+
+  worker:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile
+    environment: *bw_env
+    depends_on:
+      db:
+        condition: service_healthy
+      api:
+        condition: service_started
+    command: ["uv", "run", "bw-worker"]
+
+  ollama:
+    profiles: ["llm"]
+    image: ollama/ollama:latest
+    volumes:
+      - ollama:/root/.ollama
+    # pull models once inside:  docker compose exec ollama ollama pull nomic-embed-text
+
+volumes:
+  pgdata:
+  ollama:

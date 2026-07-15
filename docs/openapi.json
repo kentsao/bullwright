@@ -975,6 +975,76 @@
         ]
       }
     },
+    "/v1/agents/scorecards": {
+      "get": {
+        "operationId": "list_scorecards_v1_agents_scorecards_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "title": "Response List Scorecards V1 Agents Scorecards Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Scorecards",
+        "tags": [
+          "agents"
+        ]
+      }
+    },
+    "/v1/agents/{name}/scorecard": {
+      "get": {
+        "operationId": "get_scorecard_v1_agents__name__scorecard_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Scorecard V1 Agents  Name  Scorecard Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Scorecard",
+        "tags": [
+          "agents"
+        ]
+      }
+    },
     "/v1/backtests": {
       "post": {
         "operationId": "create_backtest_v1_backtests_post",
