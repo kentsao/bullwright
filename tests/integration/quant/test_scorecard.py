@@ -84,7 +84,7 @@ def test_direction_rules_and_checkpoints(engine) -> None:  # type: ignore[no-unt
     # 3 checkpoints elapsed per report (30, 60=horizon, 90)
     assert len(card.evaluations) == 12
     summary = card.summary()
-    per_ticker = {}
+    per_ticker: dict[str, list[bool]] = {}
     for e in card.evaluations:
         per_ticker.setdefault(e.ticker, []).append(e.hit)
     assert all(per_ticker["UPUP"]) and all(per_ticker["SHRT"])
